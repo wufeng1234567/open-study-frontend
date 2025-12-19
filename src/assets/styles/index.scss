@@ -182,3 +182,88 @@ aside {
     margin-bottom: 10px;
   }
 }
+/* 题型自定义标签样式 */
+.tag-question-single {
+  background-color: #409eff !important; /* 蓝色 - 单选 */
+  color: white !important;
+  border: none !important;
+}
+
+.tag-question-multiple {
+  background-color: #67c23a !important; /* 绿色 - 多选 */
+  color: white !important;
+  border: none !important;
+}
+
+.tag-question-judge {
+  background-color: #e6a23c !important; /* 橙色 - 判断 */
+  color: white !important;
+  border: none !important;
+}
+
+.tag-question-blank {
+  background-color: #909399 !important; /* 灰色 - 填空 */
+  color: white !important;
+  border: none !important;
+}
+
+.tag-question-essay {
+  background-color: #b3d9ff !important; /* 浅蓝 - 简答 */
+  color: #2c3e50 !important;
+  border: 1px solid #80bdff !important;
+}
+
+.tag-question-reading {
+  background-color: #f56c6c !important; /* 红色 - 阅读理解 */
+  color: white !important;
+  border: none !important;
+}
+
+.tag-question-cloze {
+  background-color: #dcdfe6 !important; /* 浅灰 - 完形填空 */
+  color: #2c3e50 !important;
+  border: 1px dashed #a8abb2 !important;
+}
+
+/* src/assets/styles/common-status.scss */
+.tag-status-enabled {
+  background-color: #409eff !important;
+  color: white !important;
+}
+
+.tag-status-disabled {
+  background-color: #f56c6c !important;
+  color: white !important;
+}
+
+.tag-status-reviewing {
+  background-color: #e6a23c !important;
+  color: white !important;
+}
+
+/* 难度等级标签样式 */
+.tag-difficulty-easy {
+  background-color: #67c23a !important; /* 绿色 - 简单 */
+  color: white !important;
+  border: none !important;
+}
+
+.tag-difficulty-medium {
+  background-color: #e6a23c !important; /* 橙色 - 中等 */
+  color: white !important;
+  border: none !important;
+}
+
+.tag-difficulty-hard {
+  background-color: #f56c6c !important; /* 红色 - 困难 */
+  color: white !important;
+  border: none !important;
+}
+
+.tag-difficulty-veryhard {
+  background: linear-gradient(135deg, #ff4d4f, #ff7a45) !important; /* 渐变红橙 - 极难 */
+  color: white !important;
+  border: none !important;
+  font-weight: bold;
+}
+

@@ -17,6 +17,11 @@ import directive from './directive' // directive
 import plugins from './plugins' // plugins
 import { download } from '@/utils/request'
 
+// 修改为命名导入方式
+import { MdEditor } from 'md-editor-v3';
+import 'md-editor-v3/lib/style.css';
+
+
 // svg图标
 import 'virtual:svg-icons-register'
 import SvgIcon from '@/components/SvgIcon'
@@ -43,6 +48,10 @@ import ImagePreview from "@/components/ImagePreview"
 import TreeSelect from '@/components/TreeSelect'
 // 字典标签组件
 import DictTag from '@/components/DictTag'
+// 导入单词练习组件
+import DictationPractice from '@/components/Dictation/DictationPractice.vue'
+// 导入练习页面组件
+import PracticeComponent from '@/components/PracticeComponent/PracticeComponent.vue'
 
 const app = createApp(App)
 
@@ -65,6 +74,11 @@ app.component('ImageUpload', ImageUpload)
 app.component('ImagePreview', ImagePreview)
 app.component('RightToolbar', RightToolbar)
 app.component('Editor', Editor)
+// 注册单词练习组件
+app.component('DictationPractice', DictationPractice)
+app.component('MdEditor', MdEditor);
+// 注册练习页面组件
+app.component('PracticeComponent', PracticeComponent)
 
 app.use(router)
 app.use(store)
