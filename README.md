@@ -7,6 +7,8 @@
 <h4 align="center">基于 Vue 3 + Element Plus 的智能化学习平台前端</h4>
 
 <p align="center">
+  <a href="https://github.com/wufeng1234567/open-study-frontend"><img src="https://img.shields.io/badge/GitHub-Frontend-green.svg"></a>
+  <a href="https://github.com/wufeng1234567/open-study-backend"><img src="https://img.shields.io/badge/GitHub-Backend-blue.svg"></a>
   <a href="https://vuejs.org/"><img src="https://img.shields.io/badge/Vue-3.x-brightgreen.svg"></a>
   <a href="https://vitejs.dev/"><img src="https://img.shields.io/badge/Vite-5.x-blue.svg"></a>
   <a href="https://element-plus.org/"><img src="https://img.shields.io/badge/Element%20Plus-2.x-orange.svg"></a>
