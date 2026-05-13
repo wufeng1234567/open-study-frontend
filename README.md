@@ -21,6 +21,13 @@
 
 **OpenStudy 前端**是基于 Vue 3 + Vite 构建的现代化单页应用，与 Spring Boot 3 后端配合，提供完整的智能化学习平台用户体验。系统深度集成 AI 能力，支持智能刷题、知识分享、英语学习、RAG 知识库等多种功能模块。
 
+### 项目仓库
+
+| 项目 | 地址 |
+|------|------|
+| 后端 | https://github.com/wufeng1234567/open-study-backend |
+| 前端 | https://github.com/wufeng1234567/open-study-frontend |
+
 ---
 
 ## 技术栈
