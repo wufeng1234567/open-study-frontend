@@ -42,3 +42,11 @@ export function delNote(id) {
     method: 'delete'
   })
 }
+
+// 批量删除笔记
+export function batchDelNote(ids) {
+  return request({
+    url: '/notes/note/' + ids.join(','),
+    method: 'delete'
+  })
+}

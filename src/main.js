@@ -17,11 +17,6 @@ import directive from './directive' // directive
 import plugins from './plugins' // plugins
 import { download } from '@/utils/request'
 
-// 修改为命名导入方式
-import { MdEditor } from 'md-editor-v3';
-import 'md-editor-v3/lib/style.css';
-
-
 // svg图标
 import 'virtual:svg-icons-register'
 import SvgIcon from '@/components/SvgIcon'
@@ -76,7 +71,6 @@ app.component('RightToolbar', RightToolbar)
 app.component('Editor', Editor)
 // 注册单词练习组件
 app.component('DictationPractice', DictationPractice)
-app.component('MdEditor', MdEditor);
 // 注册练习页面组件
 app.component('PracticeComponent', PracticeComponent)
 
@@ -94,5 +88,18 @@ app.use(ElementPlus, {
   // 支持 large、default、small
   size: Cookies.get('size') || 'default'
 })
+
+if (!Cookies.get('Admin-Token')) {
+  const staleKeys = ['user', 'permission', 'tagsView', 'settings']
+  staleKeys.forEach(key => {
+    try {
+      if (localStorage.getItem(key)) {
+        localStorage.removeItem(key)
+      }
+    } catch (e) {
+      console.warn(`localStorage.${key} 清除失败:`, e)
+    }
+  })
+}
 
 app.mount('#app')

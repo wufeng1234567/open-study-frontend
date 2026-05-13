@@ -1,6 +1,9 @@
 import { login, logout, getInfo } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import defAva from '@/assets/images/profile.jpg'
+import usePermissionStore from '@/store/modules/permission'
+import router from '@/router'
+import { isHttp } from '@/utils/validate'
 
 const useUserStore = defineStore(
   'user',
@@ -14,7 +17,6 @@ const useUserStore = defineStore(
       permissions: []
     }),
     actions: {
-      // 登录
       login(userInfo) {
         const username = userInfo.username.trim()
         const password = userInfo.password
@@ -24,20 +26,34 @@ const useUserStore = defineStore(
           login(username, password, code, uuid).then(res => {
             setToken(res.token)
             this.token = res.token
-            resolve()
+            this.getInfo().then(() => {
+              const permissionStore = usePermissionStore()
+              permissionStore.generateRoutes().then(accessRoutes => {
+                accessRoutes.forEach(route => {
+                  if (!isHttp(route.path)) {
+                    router.addRoute(route)
+                  }
+                })
+                resolve()
+              }).catch(error => {
+                reject(error)
+              })
+            }).catch(error => {
+              reject(error)
+            })
           }).catch(error => {
             reject(error)
           })
         })
       },
-      // 获取用户信息
+
       getInfo() {
         return new Promise((resolve, reject) => {
           getInfo().then(res => {
             const user = res.user
-            const avatar = (user.avatar == "" || user.avatar == null) ? defAva : import.meta.env.VITE_APP_BASE_API + user.avatar;
+            const avatar = (user.avatar == "" || user.avatar == null) ? defAva : import.meta.env.VITE_APP_BASE_API + user.avatar
 
-            if (res.roles && res.roles.length > 0) { // 验证返回的roles是否是一个非空数组
+            if (res.roles && res.roles.length > 0) {
               this.roles = res.roles
               this.permissions = res.permissions
             } else {
@@ -52,18 +68,39 @@ const useUserStore = defineStore(
           })
         })
       },
-      // 退出系统
+
+      clearState() {
+        this.token = ''
+        this.roles = []
+        this.permissions = []
+        this.name = ''
+        this.avatar = ''
+        removeToken()
+        const permissionStore = usePermissionStore()
+        permissionStore.$reset()
+      },
+
       logOut() {
-        return new Promise((resolve, reject) => {
-          logout(this.token).then(() => {
-            this.token = ''
-            this.roles = []
-            this.permissions = []
-            removeToken()
-            resolve()
-          }).catch(error => {
-            reject(error)
+        return new Promise((resolve) => {
+          const savedToken = this.token
+          this.clearState()
+          try {
+            sessionStorage.clear()
+          } catch (e) {
+            console.warn('sessionStorage 清除失败:', e)
+          }
+          const projectKeys = ['user', 'permission', 'tagsView', 'settings']
+          projectKeys.forEach(key => {
+            try {
+              if (localStorage.getItem(key)) {
+                localStorage.removeItem(key)
+              }
+            } catch (e) {
+              console.warn(`localStorage.${key} 清除失败:`, e)
+            }
           })
+          logout(savedToken).catch(() => {})
+          resolve()
         })
       }
     }

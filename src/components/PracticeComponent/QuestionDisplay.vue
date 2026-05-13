@@ -6,12 +6,21 @@
     <div class="question-type-hint" :class="getQuestionTypeClass(currentQuestion?.type)">
       <span class="type-icon">
         <el-icon v-if="currentQuestion?.type === 'single'"><Select /></el-icon>
-        <el-icon v-else-if="currentQuestion?.type === 'multiple'"><CircleCheck /></el-icon>
-        <el-icon v-else-if="currentQuestion?.type === 'truefalse'"><Check /></el-icon>
-        <el-icon v-else-if="currentQuestion?.type === 'fillblank'"><EditPen /></el-icon>
-        <el-icon v-else-if="currentQuestion?.type === 'essay'"><Document /></el-icon>
-        <el-icon v-else-if="currentQuestion?.type === 'readingComprehension'"><Reading /></el-icon>
-        <el-icon v-else-if="currentQuestion?.type === 'cloze'"><Edit /></el-icon>
+        <el-icon v-else-if="currentQuestion?.type === 'multiple'">
+          <CircleCheck />
+        </el-icon>
+        <el-icon v-else-if="currentQuestion?.type === 'truefalse'">
+          <Check />
+        </el-icon>
+        <el-icon v-else-if="currentQuestion?.type === 'fillblank'">
+          <EditPen />
+        </el-icon>
+        <el-icon v-else-if="currentQuestion?.type === 'essay'">
+          <Document />
+        </el-icon>
+        <el-icon v-else-if="currentQuestion?.type === 'readingComprehension' || currentQuestion?.type === 'cloze'">
+          <DocumentCopy />
+        </el-icon>
       </span>
       <span class="type-text">{{ getQuestionTypeText(currentQuestion?.type) }}</span>
       <!-- 多选题提示 -->
@@ -20,23 +29,36 @@
       <span class="truefalse-hint" v-if="currentQuestion?.type === 'truefalse'">（判断对错）</span>
     </div>
 
+    <!-- 题库和难度标签 -->
+    <div v-if="currentQuestion && (currentQuestion.bankName || currentQuestion.difficulty)" class="question-meta-tags">
+      <el-tag v-if="currentQuestion.bankName" size="small" class="bank-tag">
+        <el-icon>
+          <Collection />
+        </el-icon>
+        {{ currentQuestion.bankName }}
+      </el-tag>
+      <el-tag v-if="currentQuestion.difficulty" size="small"
+        :class="['difficulty-tag', `difficulty-${currentQuestion.difficulty}`]">
+        {{ getDifficultyText(currentQuestion.difficulty) }}
+      </el-tag>
+    </div>
+
     <!-- 题目标题 -->
     <div class="question-header">
-      <!-- 显示主干内容（阅读理解 & 完形填空） -->
-      <div
-        v-if="currentQuestion?.hasMainContent && currentQuestion?.mainContent"
-        class="main-content-box"
-        style="margin-bottom: 16px; padding: 12px; background: #f8f9fa; border-radius: 4px"
-      >
+      <!-- 显示主干内容（组合题） -->
+      <div v-if="currentQuestion?.hasMainContent && currentQuestion?.mainContent" class="main-content-box"
+        style="margin-bottom: 16px; padding: 12px; background: #f8f9fa; border-radius: 4px">
         <h4>{{ currentQuestion.mainTitle }}</h4>
         <div v-html="formatMainContent(currentQuestion.mainContent)"></div>
       </div>
-      <span class="question-index">{{ currentQuestionIndex + 1 }}/{{ totalQuestions }}</span>
+      <span class="question-index" v-if="showQuestionIndex !== false">{{ currentQuestionIndex + 1 }}/{{ totalQuestions }}</span>
 
       <!-- 只有 currentQuestion 存在才显示题目内容 -->
       <template v-if="currentQuestion">
         <!-- 移除这里的 question-type span，移动到上面的提示区域 -->
-        <span class="question-title" v-if="currentQuestion.type !== 'cloze' && currentQuestion.type !== 'readingComprehension'">{{ currentQuestion.question }}</span>
+        <span class="question-title"
+          v-if="currentQuestion.type !== 'cloze' && currentQuestion.type !== 'readingComprehension'">{{
+            currentQuestion.question }}</span>
       </template>
 
       <!-- 如果还没加载出来，显示"加载中" -->
@@ -47,16 +69,10 @@
     <div class="question-body" v-if="currentQuestion">
       <!-- 单选题、多选题、判断题 -->
       <div v-if="['single', 'multiple', 'truefalse'].includes(currentQuestion.type)" class="options">
-        <div
-          v-for="(option, index) in displayOptions"
-          :key="index"
-          class="option-item"
-          :class="{
-            'user-selected': isUserSelected(index),
-            'correct-answer': isCorrectOption(index)
-          }"
-          @click="$emit('select-option', index)"
-        >
+        <div v-for="(option, index) in displayOptions" :key="index" class="option-item" :class="{
+          'user-selected': isUserSelected(index),
+          'correct-answer': isCorrectOption(index)
+        }" @click="$emit('select-option', index)">
           <span class="option-letter">{{ getOptionLabel(index) }}.</span>
           <span class="option-text">{{ option }}</span>
         </div>
@@ -64,39 +80,23 @@
 
       <!-- 填空题 -->
       <div v-else-if="currentQuestion.type === 'fillblank'" class="input-area">
-        <el-input
-          :model-value="selectedAnswer"
-          @update:model-value="value => $emit('update-answer', value)"
-          placeholder="请输入答案"
-          size="small"
-          clearable
-        />
+        <el-input :model-value="selectedAnswer" @update:model-value="value => $emit('update-answer', value)"
+          placeholder="请输入答案" size="small" clearable />
       </div>
 
       <!-- 简答题 -->
       <div v-else-if="currentQuestion.type === 'essay'" class="input-area">
-        <el-input
-          :model-value="selectedAnswer"
-          @update:model-value="value => $emit('update-answer', value)"
-          type="textarea"
-          :rows="4"
-          placeholder="请输入您的答案"
-          clearable
-        />
+        <el-input :model-value="selectedAnswer" @update:model-value="value => $emit('update-answer', value)"
+          type="textarea" :rows="4" placeholder="请输入您的答案" clearable />
       </div>
 
-      <!-- 阅读理解 & 完形填空 -->
-      <ReadingComprehensionDisplay
-        v-else-if="['readingComprehension', 'cloze'].includes(currentQuestion.type)"
-        :current-question="currentQuestion"
-        :current-question-index="currentQuestionIndex"
-        :answers="answers"
-        :sub-fill-blank-answers="subFillBlankAnswers"
-        :sub-essay-answers="subEssayAnswers"
+      <!-- 组合题（原阅读理解 & 完形填空） -->
+      <ReadingComprehensionDisplay v-else-if="['readingComprehension', 'cloze'].includes(currentQuestion.type)"
+        :current-question="currentQuestion" :current-question-index="currentQuestionIndex" :answers="answers"
+        :sub-fill-blank-answers="subFillBlankAnswers" :sub-essay-answers="subEssayAnswers"
         @select-sub-option="(subIndex, optionIndex) => $emit('select-sub-option', subIndex, optionIndex)"
         @update-sub-fill-blank-answer="(subIndex, value) => $emit('update-sub-fill-blank-answer', subIndex, value)"
-        @update-sub-essay-answer="(subIndex, value) => $emit('update-sub-essay-answer', subIndex, value)"
-      />
+        @update-sub-essay-answer="(subIndex, value) => $emit('update-sub-essay-answer', subIndex, value)" />
 
       <!-- 其他题型（预留） -->
       <div v-else>
@@ -104,15 +104,17 @@
       </div>
     </div>
 
-    <!-- ✅ 修复：完整的解析区域 -->
-    <div class="question-analysis" v-if="currentQuestion && currentQuestion.showAnalysis">
+    <!-- ✅ 修复：完整的解析区域（排除组合题） -->
+    <div class="question-analysis" v-if="currentQuestion && currentQuestion.showAnalysis && showAnalysisImmediately && !['readingComprehension', 'cloze'].includes(currentQuestion.type)">
       <el-divider content-position="left">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <el-icon><InfoFilled /></el-icon>
+          <el-icon>
+            <InfoFilled />
+          </el-icon>
           <span>答案解析</span>
         </div>
       </el-divider>
-      
+
       <div class="analysis-content">
         <!-- 显示正确答案 -->
         <div class="correct-answer-section">
@@ -120,45 +122,46 @@
             <span class="answer-title">正确答案：</span>
             <span class="answer-value">{{ getCorrectAnswerText() }}</span>
           </div>
-          
+
           <!-- 如果用户回答了，显示用户答案 -->
           <div class="user-answer-section" v-if="showUserAnswer()">
             <span class="user-answer-title">您的答案：</span>
             <span class="user-answer-value">{{ getUserAnswerText() }}</span>
           </div>
         </div>
-        
+
         <!-- 解析内容 -->
         <div class="explanation-section" v-if="currentQuestion.analysis">
           <div class="explanation-header">
-            <el-icon><Lightning /></el-icon>
+            <el-icon>
+              <Lightning />
+            </el-icon>
             <span class="explanation-title">题目解析</span>
           </div>
           <div class="explanation-content">
             {{ currentQuestion.analysis }}
           </div>
         </div>
-        
+
         <!-- 没有解析时的提示 -->
         <div class="no-analysis" v-else>
           <el-empty description="暂无解析内容" :image-size="60">
             <template #image>
-              <el-icon><Search /></el-icon>
+              <el-icon>
+                <Search />
+              </el-icon>
             </template>
           </el-empty>
         </div>
       </div>
     </div>
 
-    <!-- 单独处理阅读理解/完形填空的解析 -->
-    <div class="reading-analysis" v-if="currentQuestion && ['readingComprehension', 'cloze'].includes(currentQuestion.type) && currentQuestion.showAnalysis">
-      <QuestionAnalysis
-        :current-question="currentQuestion"
-        :answers="answers"
-        :current-question-index="currentQuestionIndex"
-        :sub-fill-blank-answers="subFillBlankAnswers"
-        :sub-essay-answers="subEssayAnswers"
-      />
+    <!-- 单独处理组合题的解析 -->
+    <div class="reading-analysis"
+      v-if="currentQuestion && ['readingComprehension', 'cloze'].includes(currentQuestion.type) && currentQuestion.showAnalysis && showAnalysisImmediately">
+      <QuestionAnalysis :current-question="currentQuestion" :answers="answers"
+        :current-question-index="currentQuestionIndex" :sub-fill-blank-answers="subFillBlankAnswers"
+        :sub-essay-answers="subEssayAnswers" />
     </div>
   </div>
 </template>
@@ -171,11 +174,11 @@ import {
   Check,
   EditPen,
   Document,
-  Reading,
-  Edit,
+  DocumentCopy,
   InfoFilled,
   Lightning,
-  Search
+  Search,
+  Collection
 } from '@element-plus/icons-vue'
 import ReadingComprehensionDisplay from './ReadingComprehensionDisplay.vue'
 import QuestionAnalysis from './QuestionAnalysis.vue'
@@ -196,6 +199,14 @@ const props = defineProps({
   answers: {
     type: Array,
     default: () => []
+  },
+  showAnalysisImmediately: {
+    type: Boolean,
+    default: true
+  },
+  showQuestionIndex: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -215,8 +226,8 @@ function getQuestionTypeText(type) {
     truefalse: '判断题',
     fillblank: '填空题',
     essay: '简答题',
-    readingComprehension: '阅读理解',
-    cloze: '完形填空'
+    readingComprehension: '组合题',
+    cloze: '组合题'
   }
   return typeMap[type] || '未知题型'
 }
@@ -229,10 +240,21 @@ function getQuestionTypeClass(type) {
     truefalse: 'type-truefalse',
     fillblank: 'type-fillblank',
     essay: 'type-essay',
-    readingComprehension: 'type-reading',
-    cloze: 'type-cloze'
+    readingComprehension: 'type-composite',
+    cloze: 'type-composite'
   }
   return classMap[type] || ''
+}
+
+// 获取难度文本
+function getDifficultyText(difficulty) {
+  const difficultyMap = {
+    1: '简单',
+    2: '中等',
+    3: '困难',
+    4: '极难'
+  }
+  return difficultyMap[difficulty] || '中等'
 }
 
 // 格式化主干内容
@@ -261,33 +283,19 @@ function isUserSelected(index) {
 // ✅ 修复：改进的 isCorrectOption 函数
 function isCorrectOption(index) {
   if (!props.currentQuestion?.showAnalysis) return false
-  
+  if (!props.showAnalysisImmediately) return false
+
   const ca = props.currentQuestion?.correctAnswer
   const type = props.currentQuestion?.type
-  
-  // 调试日志
-  console.log(`检查选项 ${index} 是否正确:`, {
-    type,
-    correctAnswer: ca,
-    correctAnswerType: typeof ca,
-    isArray: Array.isArray(ca),
-    showAnalysis: props.currentQuestion?.showAnalysis
-  })
-  
+
   if (type === 'multiple') {
-    // 确保是数组
     if (Array.isArray(ca)) {
-      // ✅ 关键修复：检查当前选项是否在正确答案数组中
-      const result = ca.includes(index)
-      console.log(`多选题检查结果: 选项 ${index} ${result ? '在' : '不在'} 正确答案数组 ${JSON.stringify(ca)} 中`)
-      return result
+      return ca.includes(index)
     } else {
-      console.log('多选题答案不是数组:', ca)
       return false
     }
   }
-  
-  // 单选题和判断题
+
   return ca === index
 }
 
@@ -295,9 +303,9 @@ function isCorrectOption(index) {
 function getCorrectAnswerText() {
   const q = props.currentQuestion
   if (!q) return ''
-  
+
   const ca = q.correctAnswer
-  
+
   if (q.type === 'single' || q.type === 'truefalse') {
     if (typeof ca === 'number') {
       return getOptionLabel(ca) + '. ' + (q.options?.[ca] || ca)
@@ -311,7 +319,7 @@ function getCorrectAnswerText() {
   } else if (q.type === 'fillblank' || q.type === 'essay') {
     return ca || '暂无标准答案'
   }
-  
+
   return ca
 }
 
@@ -319,9 +327,9 @@ function getCorrectAnswerText() {
 function getUserAnswerText() {
   const q = props.currentQuestion
   if (!q) return ''
-  
+
   const userAnswer = props.selectedAnswer
-  
+
   if (q.type === 'single' || q.type === 'truefalse') {
     if (typeof userAnswer === 'number') {
       return getOptionLabel(userAnswer) + '. ' + (q.options?.[userAnswer] || userAnswer)
@@ -335,7 +343,7 @@ function getUserAnswerText() {
   } else if (q.type === 'fillblank' || q.type === 'essay') {
     return userAnswer || '未作答'
   }
-  
+
   return userAnswer
 }
 
@@ -343,17 +351,17 @@ function getUserAnswerText() {
 function showUserAnswer() {
   const q = props.currentQuestion
   if (!q) return false
-  
+
   const userAnswer = props.selectedAnswer
-  
+
   if (q.type === 'single' || q.type === 'truefalse') {
     return userAnswer !== null && userAnswer !== undefined
   } else if (q.type === 'multiple') {
     return Array.isArray(userAnswer) && userAnswer.length > 0
   } else if (q.type === 'fillblank' || q.type === 'essay') {
-    return userAnswer && userAnswer.trim() !== ''
+    return userAnswer && typeof userAnswer === 'string' && userAnswer.trim() !== ''
   }
-  
+
   return false
 }
 </script>
@@ -395,45 +403,91 @@ function showUserAnswer() {
 
 /* 不同题型的背景色 */
 .type-single {
-  background-color: #e6f7ff;
+  background-color: rgba(230, 247, 255, 0.8);
   border-left: 4px solid #409eff;
   color: #1890ff;
 }
 
 .type-multiple {
-  background-color: #f0f9ff;
+  background-color: rgba(240, 249, 255, 0.8);
   border-left: 4px solid #36cfc9;
   color: #08979c;
 }
 
 .type-truefalse {
-  background-color: #fff7e6;
+  background-color: rgba(255, 247, 230, 0.8);
   border-left: 4px solid #faad14;
   color: #d48806;
 }
 
 .type-fillblank {
-  background-color: #f6ffed;
+  background-color: rgba(246, 255, 237, 0.8);
   border-left: 4px solid #73d13d;
   color: #389e0d;
 }
 
 .type-essay {
-  background-color: #f9f0ff;
+  background-color: rgba(249, 240, 255, 0.8);
   border-left: 4px solid #9254de;
   color: #722ed1;
 }
 
-.type-reading {
-  background-color: #f0f5ff;
-  border-left: 4px solid #597ef7;
-  color: #2f54eb;
+/* ✅ 组合题主题型样式 - 使用橙色/金色系，不与任何题型重复 */
+.type-composite {
+  background-color: rgba(255, 247, 230, 0.85);
+  border-left: 4px solid #fa8c16;
+  color: #d46b00;
 }
 
-.type-cloze {
-  background-color: #f0f5ff;
-  border-left: 4px solid #597ef7;
-  color: #2f54eb;
+/* 题库和难度标签 */
+.question-meta-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.question-meta-tags .bank-tag {
+  background: #ecf5ff;
+  border-color: #d9ecff;
+  color: #409eff;
+  border-radius: 4px;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.question-meta-tags .difficulty-tag {
+  border-radius: 4px;
+  font-size: 12px;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.question-meta-tags .difficulty-tag.difficulty-1 {
+  background: #f0f9eb;
+  border-color: #e1f3d8;
+  color: #67c23a;
+}
+
+.question-meta-tags .difficulty-tag.difficulty-2 {
+  background: #ecf5ff;
+  border-color: #d9ecff;
+  color: #409eff;
+}
+
+.question-meta-tags .difficulty-tag.difficulty-3 {
+  background: #fdf6ec;
+  border-color: #faecd8;
+  color: #e6a23c;
+}
+
+.question-meta-tags .difficulty-tag.difficulty-4 {
+  background: #fef0f0;
+  border-color: #fde2e2;
+  color: #f56c6c;
 }
 
 /* 原样式调整 */
@@ -443,11 +497,10 @@ function showUserAnswer() {
 
 .question-index {
   font-weight: bold;
-  color: #409eff;
+  color: #6b7280;
   margin-right: 10px;
 }
 
-/* 移除原来的 question-type 样式 */
 .question-type {
   display: none;
 }
@@ -469,26 +522,26 @@ function showUserAnswer() {
   align-items: center;
   padding: 10px;
   margin-bottom: 8px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .option-item:hover {
-  background-color: #f5f7fa;
+  background-color: #f3f4f6;
 }
 
 .option-item.user-selected {
-  background-color: #409eff;
-  color: white;
-  border-color: #409eff;
+  background-color: #f3f4f6;
+  color: #1f2937;
+  border-color: #d1d5db;
 }
 
 .option-item.correct-answer {
   border: 2px solid #67c23a;
   background-color: #f0f9eb;
-  color: #2e8b57;
+  color: #1f2937;
 }
 
 .option-letter {
@@ -510,17 +563,17 @@ function showUserAnswer() {
   margin-bottom: 16px;
   padding: 12px;
   background: #f8f9fa;
-  border-radius: 4px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
 }
 
-/* ✅ 新增：解析区域样式 */
 .question-analysis {
   margin-top: 30px;
   padding: 20px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: #f8f9fa;
   border-radius: 8px;
-  border-left: 4px solid #1890ff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #d1d5db;
 }
 
 .analysis-content {
@@ -532,9 +585,9 @@ function showUserAnswer() {
 .correct-answer-section {
   margin-bottom: 20px;
   padding: 15px;
-  background: #f0f9ff;
+  background: #f0f9eb;
   border-radius: 6px;
-  border: 1px solid #91d5ff;
+  border: 1px solid #e1f3d8;
 }
 
 .answer-header {
@@ -545,14 +598,14 @@ function showUserAnswer() {
 
 .answer-title {
   font-weight: bold;
-  color: #1890ff;
+  color: #1f2937;
   font-size: 15px;
   min-width: 80px;
 }
 
 .answer-value {
   font-size: 15px;
-  color: #096dd9;
+  color: #1f2937;
   font-weight: 600;
   flex: 1;
 }
@@ -560,28 +613,28 @@ function showUserAnswer() {
 .user-answer-section {
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px dashed #91d5ff;
+  border-top: 1px dashed #e5e7eb;
 }
 
 .user-answer-title {
   font-weight: bold;
-  color: #52c41a;
+  color: #6b7280;
   font-size: 14px;
   min-width: 80px;
 }
 
 .user-answer-value {
   font-size: 14px;
-  color: #389e0d;
+  color: #6b7280;
   font-weight: 500;
   flex: 1;
 }
 
 .explanation-section {
   padding: 15px;
-  background: #fff7e6;
+  background: #fefce8;
   border-radius: 6px;
-  border: 1px solid #ffd591;
+  border: 1px solid #e5e0c0;
 }
 
 .explanation-header {
@@ -592,20 +645,20 @@ function showUserAnswer() {
 }
 
 .explanation-header .el-icon {
-  color: #faad14;
+  color: #947a4a;
   font-size: 18px;
 }
 
 .explanation-title {
   font-weight: bold;
-  color: #d48806;
+  color: #7a6238;
   font-size: 15px;
 }
 
 .explanation-content {
   font-size: 14px;
   line-height: 1.6;
-  color: #614700;
+  color: #6b7280;
 }
 
 .no-analysis {

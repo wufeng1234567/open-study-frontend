@@ -3,11 +3,12 @@ const useTagsViewStore = defineStore(
   {
     state: () => ({
       visitedViews: [],
-      cachedViews: [],
+      cachedViews: [],  // ✅ 添加 MenuMain
       iframeViews: []
     }),
     actions: {
       addView(view) {
+        // console.log('📌 [tagsView] addView:', view.name, 'noCache:', view.meta?.noCache)
         this.addVisitedView(view)
         this.addCachedView(view)
       },
@@ -28,9 +29,15 @@ const useTagsViewStore = defineStore(
         )
       },
       addCachedView(view) {
-        if (this.cachedViews.includes(view.name)) return
+        if (this.cachedViews.includes(view.name)) {
+          // console.log('⚠️ [tagsView] 已缓存过:', view.name)
+          return
+        }
         if (!view.meta.noCache) {
           this.cachedViews.push(view.name)
+          // console.log('✅ [tagsView] 添加到缓存:', view.name, '当前缓存:', [...this.cachedViews])
+        } else {
+          console.log('❌ [tagsView] noCache=true 跳过:', view.name)
         }
       },
       delView(view) {
@@ -64,7 +71,10 @@ const useTagsViewStore = defineStore(
       delCachedView(view) {
         return new Promise(resolve => {
           const index = this.cachedViews.indexOf(view.name)
-          index > -1 && this.cachedViews.splice(index, 1)
+          if (index > -1) {
+            this.cachedViews.splice(index, 1)
+            // console.log('🗑️ [tagsView] 删除缓存:', view.name, '剩余:', [...this.cachedViews])
+          }
           resolve([...this.cachedViews])
         })
       },
@@ -119,6 +129,7 @@ const useTagsViewStore = defineStore(
       delAllCachedViews(view) {
         return new Promise(resolve => {
           this.cachedViews = []
+          console.log('🗑️ [tagsView] 清空所有缓存')
           resolve([...this.cachedViews])
         })
       },
@@ -144,7 +155,7 @@ const useTagsViewStore = defineStore(
             if (i > -1) {
               this.cachedViews.splice(i, 1)
             }
-            if(item.meta.link) {
+            if (item.meta.link) {
               const fi = this.iframeViews.findIndex(v => v.path === item.path)
               this.iframeViews.splice(fi, 1)
             }
@@ -167,7 +178,7 @@ const useTagsViewStore = defineStore(
             if (i > -1) {
               this.cachedViews.splice(i, 1)
             }
-            if(item.meta.link) {
+            if (item.meta.link) {
               const fi = this.iframeViews.findIndex(v => v.path === item.path)
               this.iframeViews.splice(fi, 1)
             }
@@ -177,6 +188,7 @@ const useTagsViewStore = defineStore(
         })
       }
     }
-  })
+  }
+)
 
 export default useTagsViewStore

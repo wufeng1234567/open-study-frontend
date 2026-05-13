@@ -1,9 +1,18 @@
 import request from '@/utils/request'
 
-// 查询单词本列表
+// 查询单词本列表（后台管理用）
 export function listWordBooks(query) {
   return request({
     url: '/wordBooks/wordBooks/list',
+    method: 'get',
+    params: query
+  })
+}
+
+// 前台查询用户可见的单词本列表
+export function listFrontWordBooks(query) {
+  return request({
+    url: '/wordBooks/wordBooks/front/list',
     method: 'get',
     params: query
   })

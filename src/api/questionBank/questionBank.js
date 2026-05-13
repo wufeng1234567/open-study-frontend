@@ -18,6 +18,14 @@ export function listQuestionBankAll(query) {
   })
 }
 
+// ✅ 新增：获取当前用户的题库列表
+export function listMyQuestionBank() {
+  return request({
+    url: '/questionBank/questionBank/my',
+    method: 'get'
+  })
+}
+
 // 查询题库主详细
 export function getQuestionBank(id) {
   return request({
@@ -26,10 +34,19 @@ export function getQuestionBank(id) {
   })
 }
 
-// 新增题库主
+// 新增题库主（原接口，返回影响行数）
 export function addQuestionBank(data) {
   return request({
     url: '/questionBank/questionBank',
+    method: 'post',
+    data: data
+  })
+}
+
+// ✅ 创建题库并返回完整对象（供前台使用）
+export function createQuestionBankWithReturn(data) {
+  return request({
+    url: '/questionBank/questionBank/createWithReturn',
     method: 'post',
     data: data
   })

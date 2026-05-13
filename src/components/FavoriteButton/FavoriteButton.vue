@@ -1,13 +1,12 @@
 <!-- src/components/FavoriteButton/FavoriteButton.vue -->
 <template>
-  <el-button 
-    :type="buttonType" 
-    :size="size" 
+  <el-button
+    :class="['favorite-btn', { 'is-collected': isCollected }]"
+    :size="size"
     @click="handleCollect"
     :loading="isLoading"
     :disabled="disabled"
-    :plain="plain"
-    :round="round"
+    plain
   >
     <el-icon><Star /></el-icon>
     {{ buttonText }}
@@ -23,23 +22,28 @@ import { Star } from '@element-plus/icons-vue'
 const { proxy } = getCurrentInstance()
 
 // API 根据类型动态导入
-import { 
-  checkBankFavoriteExists, 
+import {
+  checkBankFavoriteExists,
   addFavoriteBank,
   deleteFavoriteBankByUserAndBank
 } from '@/api/favoriteBank/favoriteBank'
-import { 
-  checkQuestionFavoriteExists, 
+import {
+  checkQuestionFavoriteExists,
   addFavoriteQuestion,
   deleteFavoriteQuestionByUserAndQuestion
 } from '@/api/favoriteQuestion/favoriteQuestion'
+import {
+  checkNoteFavoriteExists,
+  addFavoriteNote,
+  deleteFavoriteNoteByUserAndNote
+} from '@/api/favoriteNote/favoriteNote'
 
 const props = defineProps({
   // 必需属性
   type: {
     type: String,
     required: true,
-    validator: (value) => ['bank', 'question'].includes(value)
+    validator: (value) => ['bank', 'question', 'note'].includes(value)
   },
   targetId: {
     type: [Number, String],
@@ -88,11 +92,6 @@ const isLoading = ref(false)
 const favoriteId = ref(null)
 const userStore = useUserStore()
 
-// 计算属性
-const buttonType = computed(() => {
-  return isCollected.value ? props.collectedButtonType : props.uncollectedButtonType
-})
-
 const buttonText = computed(() => {
   return isCollected.value ? '已收藏' : '收藏'
 })
@@ -114,17 +113,29 @@ const checkLogin = () => {
 
 // 检查收藏状态
 const checkFavoriteStatus = () => {
+  // 如果没有 targetId，不检查
+  if (!props.targetId) {
+    return
+  }
+
   if (props.initialCollected !== null) {
     // 如果父组件提供了初始状态，使用父组件的状态
     isCollected.value = props.initialCollected
     return
   }
-  
+
   const userId = getCurrentUserId()
   if (!userId) return
-  
-  const checkApi = props.type === 'bank' ? checkBankFavoriteExists : checkQuestionFavoriteExists
-  
+
+  let checkApi
+  if (props.type === 'bank') {
+    checkApi = checkBankFavoriteExists
+  } else if (props.type === 'question') {
+    checkApi = checkQuestionFavoriteExists
+  } else if (props.type === 'note') {
+    checkApi = checkNoteFavoriteExists
+  }
+
   checkApi(userId, props.targetId).then(response => {
     if (response.code === 200) {
       isCollected.value = response.data.isFavorited
@@ -142,15 +153,22 @@ const checkFavoriteStatus = () => {
 // 处理收藏/取消收藏
 const handleCollect = () => {
   if (!checkLogin()) return
-  
+
   isLoading.value = true
-  
+
   const userId = getCurrentUserId()
-  
+
   if (isCollected.value) {
     // 取消收藏
-    const deleteApi = props.type === 'bank' ? deleteFavoriteBankByUserAndBank : deleteFavoriteQuestionByUserAndQuestion
-    
+    let deleteApi
+    if (props.type === 'bank') {
+      deleteApi = deleteFavoriteBankByUserAndBank
+    } else if (props.type === 'question') {
+      deleteApi = deleteFavoriteQuestionByUserAndQuestion
+    } else if (props.type === 'note') {
+      deleteApi = deleteFavoriteNoteByUserAndNote
+    }
+
     deleteApi(userId, props.targetId).then(result => {
       if (result.code === 200) {
         isCollected.value = false
@@ -169,15 +187,24 @@ const handleCollect = () => {
     const data = {
       userId: userId
     }
-    
+
     if (props.type === 'bank') {
       data.bankId = props.targetId
-    } else {
+    } else if (props.type === 'question') {
       data.questionId = props.targetId
+    } else if (props.type === 'note') {
+      data.noteId = props.targetId
     }
-    
-    const addApi = props.type === 'bank' ? addFavoriteBank : addFavoriteQuestion
-    
+
+    let addApi
+    if (props.type === 'bank') {
+      addApi = addFavoriteBank
+    } else if (props.type === 'question') {
+      addApi = addFavoriteQuestion
+    } else if (props.type === 'note') {
+      addApi = addFavoriteNote
+    }
+
     addApi(data).then(result => {
       if (result.code === 200) {
         isCollected.value = true
@@ -217,8 +244,10 @@ const handleCollectError = (error) => {
 }
 
 // 监听 targetId 变化
-watch(() => props.targetId, () => {
-  checkFavoriteStatus()
+watch(() => props.targetId, (newVal) => {
+  if (newVal) {
+    checkFavoriteStatus()
+  }
 })
 
 // 监听 initialCollected 变化
@@ -241,12 +270,41 @@ defineExpose({
 </script>
 
 <style scoped>
-.el-button {
-  transition: all 0.3s ease;
+.favorite-btn {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 8px 16px;
+  height: auto;
+  font-weight: 500;
 }
 
-.el-button:hover {
+.favorite-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #d1d5db;
+  color: #4b5563;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.favorite-btn.is-collected {
+  background: #fff;
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
+.favorite-btn.is-collected:hover {
+  border-color: #d97706;
+  color: #d97706;
+  background: #fffbf0;
+}
+
+.favorite-btn .el-icon {
+  margin-right: 4px;
+}
+
+.favorite-btn.is-loading {
+  opacity: 0.7;
 }
 </style>

@@ -1,10 +1,12 @@
 <template>
   <div v-if="!item.hidden">
-    <template v-if="hasOneShowingChild(item.children, item) && (!onlyOneChild.children || onlyOneChild.noShowingChildren) && !item.alwaysShow">
+    <template
+      v-if="hasOneShowingChild(item.children, item) && (!onlyOneChild.children || onlyOneChild.noShowingChildren) && !item.alwaysShow">
       <app-link v-if="onlyOneChild.meta" :to="resolvePath(onlyOneChild.path, onlyOneChild.query)">
         <el-menu-item :index="resolvePath(onlyOneChild.path)" :class="{ 'submenu-title-noDropdown': !isNest }">
-          <svg-icon :icon-class="onlyOneChild.meta.icon || (item.meta && item.meta.icon)"/>
-          <template #title><span class="menu-title" :title="hasTitle(onlyOneChild.meta.title)">{{ onlyOneChild.meta.title }}</span></template>
+          <svg-icon :icon-class="onlyOneChild.meta.icon || (item.meta && item.meta.icon)" />
+          <template #title><span class="menu-title" :title="hasTitle(onlyOneChild.meta.title)">{{
+            onlyOneChild.meta.title }}</span></template>
         </el-menu-item>
       </app-link>
     </template>
@@ -15,19 +17,14 @@
         <span class="menu-title" :title="hasTitle(item.meta.title)">{{ item.meta.title }}</span>
       </template>
 
-      <sidebar-item
-        v-for="(child, index) in item.children"
-        :key="child.path + index"
-        :is-nest="true"
-        :item="child"
-        :base-path="resolvePath(child.path)"
-        class="nest-menu"
-      />
+      <sidebar-item v-for="(child, index) in item.children" :key="child.path + index" :is-nest="true" :item="child"
+        :base-path="resolvePath(child.path)" class="nest-menu" />
     </el-sub-menu>
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'  // ✅ 添加这行
 import { isExternal } from '@/utils/validate'
 import AppLink from './Link'
 import { getNormalPath } from '@/utils/ruoyi'
@@ -92,7 +89,13 @@ function resolvePath(routePath, routeQuery) {
   return getNormalPath(props.basePath + '/' + routePath)
 }
 
-function hasTitle(title){
+// ✅ 修复后的 hasTitle 函数 - 安全处理 undefined
+function hasTitle(title) {
+  // 如果 title 不存在或不是字符串，返回空字符串
+  if (!title || typeof title !== 'string') {
+    return "";
+  }
+  // 只有长度大于 5 才返回 title 作为 tooltip
   if (title.length > 5) {
     return title;
   } else {
@@ -100,3 +103,7 @@ function hasTitle(title){
   }
 }
 </script>
+
+<style scoped>
+/* 你的原有样式保持不变 */
+</style>

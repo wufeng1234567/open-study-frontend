@@ -1,28 +1,11 @@
 <template>
   <div class="el-tree-select">
-    <el-select
-      style="width: 100%"
-      v-model="valueId"
-      ref="treeSelect"
-      :filterable="true"
-      :clearable="true"
-      @clear="clearHandle"
-      :filter-method="selectFilterData"
-      :placeholder="placeholder"
-    >
+    <el-select style="width: 100%" v-model="valueId" ref="treeSelect" :filterable="true" :clearable="true"
+      @clear="clearHandle" :filter-method="selectFilterData" :placeholder="placeholder">
       <el-option :value="valueId" :label="valueTitle">
-        <el-tree
-          id="tree-option"
-          ref="selectTree"
-          :accordion="accordion"
-          :data="options"
-          :props="objMap"
-          :node-key="objMap.value"
-          :expand-on-click-node="false"
-          :default-expanded-keys="defaultExpandedKey"
-          :filter-node-method="filterNode"
-          @node-click="handleNodeClick"
-        ></el-tree>
+        <el-tree id="tree-option" ref="selectTree" :accordion="accordion" :data="options" :props="objMap"
+          :node-key="objMap.value" :expand-on-click-node="false" :default-expanded-keys="defaultExpandedKey"
+          :filter-node-method="filterNode" @node-click="handleNodeClick"></el-tree>
       </el-option>
     </el-select>
   </div>
@@ -82,7 +65,7 @@ const defaultExpandedKey = ref([]);
 function initHandle() {
   nextTick(() => {
     const selectedValue = valueId.value;
-    if(selectedValue !== null && typeof (selectedValue) !== 'undefined') {
+    if (selectedValue !== null && typeof (selectedValue) !== 'undefined') {
       const node = proxy.$refs.selectTree.getNode(selectedValue)
       if (node) {
         valueTitle.value = node.data[props.objMap.label]
@@ -130,6 +113,7 @@ watch(valueId, () => {
 
 <style lang='scss' scoped>
 @import "@/assets/styles/variables.module.scss";
+
 .el-scrollbar .el-scrollbar__view .el-select-dropdown__item {
   padding: 0;
   background-color: #fff;

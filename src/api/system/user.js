@@ -133,3 +133,20 @@ export function deptTreeSelect() {
     method: 'get'
   })
 }
+
+// 前台获取用户列表（@ 功能专用）
+export function listUserFront(query) {
+  return request({
+    url: '/system/user/frontList',
+    method: 'get',
+    params: query
+  })
+}
+
+// 前台获取用户详情（@跳转专用）
+export function getFrontUserInfo(userId) {
+  return request({
+    url: '/system/user/front/' + userId,
+    method: 'get'
+  })
+}

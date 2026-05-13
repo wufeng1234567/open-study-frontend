@@ -92,7 +92,7 @@ export const getQuestionTypeText = (type) => {
       'fill': 4,
       'essay': 5,
       'reading': 6,
-      'cloze': 7
+      'cloze': 6  // 将cloze也映射到6，统一显示为组合题
     }
     typeNum = typeMap[type] || 0
   }
@@ -103,8 +103,8 @@ export const getQuestionTypeText = (type) => {
     3: '判断题',
     4: '填空题',
     5: '简答题',
-    6: '阅读理解',
-    7: '完形填空'
+    6: '组合题',  // 将阅读理解和完形填空统一改为组合题
+    7: '组合题'   // 类型7也显示为组合题
   }
   return typeMap[typeNum] || '未知题型'
 }
@@ -124,7 +124,7 @@ export const getQuestionTypeClass = (type) => {
       'fill': 4,
       'essay': 5,
       'reading': 6,
-      'cloze': 7
+      'cloze': 6  // 将cloze也映射到6，使用相同的CSS类
     }
     typeNum = typeMap[type] || 0
   }
@@ -135,8 +135,8 @@ export const getQuestionTypeClass = (type) => {
     3: 'type-truefalse',
     4: 'type-fillblank',
     5: 'type-essay',
-    6: 'type-reading',
-    7: 'type-cloze'
+    6: 'type-composite',  // 统一使用type-composite类名
+    7: 'type-composite'   // 类型7也使用相同的类名
   }
   return classMap[typeNum] || ''
 }

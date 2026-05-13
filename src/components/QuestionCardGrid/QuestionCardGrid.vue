@@ -7,35 +7,25 @@
         <h2 class="page-title">{{ title }}</h2>
         <span class="total-count" v-if="showTotalCount">共 {{ total }} 道题目</span>
       </div>
-      
+
       <div class="search-section" v-if="showSearch">
-        <el-input
-          v-model="localSearchKeyword"
-          placeholder="搜索题目内容"
-          clearable
-          @keyup.enter="handleSearch"
-          @clear="handleSearchClear"
-          class="search-input"
-        >
+        <el-input v-model="localSearchKeyword" placeholder="搜索题目内容" clearable @keyup.enter="handleSearch"
+          @clear="handleSearchClear" class="search-input">
           <template #prefix>
-            <el-icon><Search /></el-icon>
+            <el-icon>
+              <Search />
+            </el-icon>
           </template>
         </el-input>
-        
-        <el-button 
-          type="primary" 
-          @click="handleSearch"
-          class="search-btn"
-        >
+
+        <el-button type="primary" @click="handleSearch" class="search-btn">
           搜索
         </el-button>
-        
-        <el-button 
-          @click="handleRefresh"
-          class="refresh-btn"
-          v-if="showRefresh"
-        >
-          <el-icon><Refresh /></el-icon>
+
+        <el-button @click="handleRefresh" class="refresh-btn" v-if="showRefresh">
+          <el-icon>
+            <Refresh />
+          </el-icon>
           刷新
         </el-button>
       </div>
@@ -45,41 +35,32 @@
     <div class="filter-sidebar" v-if="showFilter">
       <div class="filter-section">
         <h3 class="filter-title">筛选</h3>
-        
+
         <!-- 题型筛选 -->
         <div class="filter-group" v-if="showQuestionTypeFilter">
           <div class="filter-label">题型</div>
           <div class="filter-options">
             <el-checkbox-group v-model="localFilters.questionType" @change="handleFilterChange">
-              <el-checkbox 
-                v-for="type in questionTypes" 
-                :key="type.value" 
-                :label="type.value"
-                class="filter-checkbox"
-              >
+              <el-checkbox v-for="type in questionTypes" :key="type.value" :label="type.value" class="filter-checkbox">
                 {{ type.label }}
               </el-checkbox>
             </el-checkbox-group>
           </div>
         </div>
-        
+
         <!-- 难度筛选 -->
         <div class="filter-group" v-if="showDifficultyFilter">
           <div class="filter-label">难度</div>
           <div class="filter-options">
             <el-checkbox-group v-model="localFilters.difficulty" @change="handleFilterChange">
-              <el-checkbox 
-                v-for="diff in difficultyOptions" 
-                :key="diff.value" 
-                :label="diff.value"
-                class="filter-checkbox"
-              >
+              <el-checkbox v-for="diff in difficultyOptions" :key="diff.value" :label="diff.value"
+                class="filter-checkbox">
                 <span :class="`difficulty-${diff.value}`">{{ diff.label }}</span>
               </el-checkbox>
             </el-checkbox-group>
           </div>
         </div>
-        
+
         <!-- 是否标星 -->
         <div class="filter-group" v-if="showStarFilter">
           <div class="filter-label">标星状态</div>
@@ -91,7 +72,7 @@
             </el-radio-group>
           </div>
         </div>
-        
+
         <!-- 收藏状态 -->
         <div class="filter-group" v-if="showFavoriteStatusFilter">
           <div class="filter-label">收藏状态</div>
@@ -103,28 +84,18 @@
             </el-radio-group>
           </div>
         </div>
-        
+
         <!-- 题库筛选 -->
         <div class="filter-group" v-if="showBankFilter && questionBanks.length > 0">
           <div class="filter-label">所属题库</div>
           <div class="filter-options">
-            <el-select
-              v-model="localFilters.bankId"
-              placeholder="选择题库"
-              clearable
-              @change="handleFilterChange"
-              class="bank-select"
-            >
-              <el-option
-                v-for="bank in questionBanks"
-                :key="bank.id"
-                :label="bank.bankName"
-                :value="bank.id"
-              />
+            <el-select v-model="localFilters.bankId" placeholder="选择题库" clearable @change="handleFilterChange"
+              class="bank-select">
+              <el-option v-for="bank in questionBanks" :key="bank.id" :label="bank.bankName" :value="bank.id" />
             </el-select>
           </div>
         </div>
-        
+
         <!-- 清空筛选按钮 -->
         <div class="filter-actions" v-if="showFilterActions">
           <el-button type="default" size="small" @click="resetFilters" plain>
@@ -146,7 +117,9 @@
         <slot name="empty" :keyword="localSearchKeyword">
           <el-empty :description="emptyText">
             <template #image>
-              <el-icon size="80"><component :is="emptyIcon" /></el-icon>
+              <el-icon size="80">
+                <component :is="emptyIcon" />
+              </el-icon>
             </template>
             <slot name="empty-action">
               <el-button type="primary" @click="handleEmptyAction">
@@ -160,15 +133,8 @@
       <!-- 题目卡片列表 -->
       <div v-else class="question-list">
         <el-row :gutter="20">
-          <el-col 
-            v-for="(item, index) in paginatedQuestions" 
-            :key="getItemKey(item, index)" 
-            :xs="24" 
-            :sm="colSm" 
-            :md="colMd" 
-            :lg="colLg" 
-            class="question-card-col"
-          >
+          <el-col v-for="(item, index) in paginatedQuestions" :key="getItemKey(item, index)" :xs="24" :sm="colSm"
+            :md="colMd" :lg="colLg" class="question-card-col">
             <slot name="card" :item="item" :index="index">
               <!-- 默认卡片样式 -->
               <div class="question-card" @click="handleCardClick(item)">
@@ -177,125 +143,120 @@
                   <div class="question-type-badge" :class="getQuestionTypeClass(item.questionDetail?.questionType)">
                     {{ getQuestionTypeText(item.questionDetail?.questionType) }}
                   </div>
-                  
+
                   <div class="header-actions">
                     <!-- 标星按钮 -->
-                    <el-icon 
-                      v-if="showStarAction"
-                      :class="['star-icon', { 'starred': item.isStarred }]"
-                      @click.stop="handleStarClick(item)"
-                    >
+                    <el-icon v-if="showStarAction" :class="['star-icon', { 'starred': item.isStarred }]"
+                      @click.stop="handleStarClick(item)">
                       <StarFilled v-if="item.isStarred" />
                       <Star v-else />
                     </el-icon>
-                    
+
                     <!-- 收藏状态标签 -->
-                    <el-tag 
-                      v-if="showFavoriteStatus && item.favoriteStatus"
-                      :type="getFavoriteStatusType(item.favoriteStatus)"
-                      size="small"
-                      class="status-tag"
-                    >
+                    <el-tag v-if="showFavoriteStatus && item.favoriteStatus"
+                      :type="getFavoriteStatusType(item.favoriteStatus)" size="small" class="status-tag">
                       {{ getFavoriteStatusText(item.favoriteStatus) }}
                     </el-tag>
                   </div>
                 </div>
-                
+
                 <!-- 卡片内容 -->
                 <div class="card-content">
                   <div class="question-text" v-html="formatQuestionText(item.questionDetail?.questionText)"></div>
-                  
+
                   <!-- 选择题选项预览 -->
-                  <div v-if="[1, 2].includes(item.questionDetail?.questionType) && item.questionDetail?.options" class="options-preview">
-                    <div 
-                      v-for="(option, optIndex) in getPreviewOptions(item.questionDetail.options)" 
-                      :key="optIndex"
-                      class="option-preview"
-                    >
+                  <div v-if="[1, 2].includes(item.questionDetail?.questionType) && item.questionDetail?.options"
+                    class="options-preview">
+                    <div v-for="(option, optIndex) in getPreviewOptions(item.questionDetail.options)" :key="optIndex"
+                      class="option-preview">
                       <span class="option-letter">{{ getOptionLabel(optIndex) }}.</span>
                       <span class="option-text">{{ option }}</span>
                     </div>
                   </div>
-                  
+
                   <!-- 填空题/简答题预览 -->
                   <div v-else-if="[4, 5].includes(item.questionDetail?.questionType)" class="answer-preview">
                     <div class="preview-label">答案预览：</div>
                     <div class="preview-text">{{ truncateText(item.questionDetail?.answer, 60) }}</div>
                   </div>
-                  
+
                   <!-- 难度标签 -->
                   <div v-if="showDifficulty && item.questionDetail?.difficulty" class="difficulty-tag">
-                    <el-tag 
-                      size="small"
-                      :type="getDifficultyType(item.questionDetail.difficulty)"
-                    >
+                    <el-tag size="small" :type="getDifficultyType(item.questionDetail.difficulty)">
                       {{ getDifficultyText(item.questionDetail.difficulty) }}
                     </el-tag>
                   </div>
-                  
+
                   <!-- 题库信息 -->
                   <div v-if="showBankInfo && item.bankDetail" class="bank-info">
-                    <el-icon><Collection /></el-icon>
+                    <el-icon>
+                      <Collection />
+                    </el-icon>
                     <span>{{ item.bankDetail.bankName }}</span>
                   </div>
-                  
+
                   <!-- 学习统计 -->
                   <div v-if="showStudyStats" class="study-stats">
                     <div class="stat-item">
-                      <el-icon><Check /></el-icon>
+                      <el-icon>
+                        <Check />
+                      </el-icon>
                       <span>正确: {{ item.correctTimes || 0 }}</span>
                     </div>
                     <div class="stat-item">
-                      <el-icon><Close /></el-icon>
+                      <el-icon>
+                        <Close />
+                      </el-icon>
                       <span>错误: {{ item.errorTimes || 0 }}</span>
                     </div>
                     <div class="stat-item">
-                      <el-icon><RefreshRight /></el-icon>
+                      <el-icon>
+                        <RefreshRight />
+                      </el-icon>
                       <span>复习: {{ item.reviewCount || 0 }}</span>
                     </div>
                   </div>
-                  
+
                   <!-- 收藏备注和标签 -->
                   <div v-if="showMetaInfo && (item.notes || item.tags)" class="meta-info">
                     <div v-if="item.notes" class="notes">
-                      <el-icon><Comment /></el-icon>
+                      <el-icon>
+                        <Comment />
+                      </el-icon>
                       <span class="notes-text">{{ item.notes }}</span>
                     </div>
                     <div v-if="item.tags" class="tags">
-                      <el-icon><PriceTag /></el-icon>
+                      <el-icon>
+                        <PriceTag />
+                      </el-icon>
                       <span class="tags-text">{{ item.tags }}</span>
                     </div>
                   </div>
-                  
+
                   <!-- 收藏时间 -->
                   <div v-if="showFavoriteTime && item.createTime" class="favorite-time">
-                    <el-icon><Clock /></el-icon>
+                    <el-icon>
+                      <Clock />
+                    </el-icon>
                     <span>收藏于 {{ formatTime(item.createTime) }}</span>
                   </div>
                 </div>
-                
+
                 <!-- 卡片底部操作按钮 -->
                 <div class="card-footer">
                   <slot name="actions" :item="item" :index="index">
-                    <el-button 
-                      type="primary" 
-                      size="small" 
-                      plain
-                      @click.stop="handleViewDetail(item)"
-                    >
-                      <el-icon><View /></el-icon>
+                    <el-button type="primary" size="small" plain @click.stop="handleViewDetail(item)">
+                      <el-icon>
+                        <View />
+                      </el-icon>
                       查看详情
                     </el-button>
-                    
-                    <el-button 
-                      v-if="showUncollectAction"
-                      type="danger" 
-                      size="small" 
-                      plain
-                      @click.stop="handleUncollect(item)"
-                      :loading="uncollectLoading[getFavoriteId(item)]"
-                    >
-                      <el-icon><Delete /></el-icon>
+
+                    <el-button v-if="showUncollectAction" type="danger" size="small" plain
+                      @click.stop="handleUncollect(item)" :loading="uncollectLoading[getFavoriteId(item)]">
+                      <el-icon>
+                        <Delete />
+                      </el-icon>
                       取消收藏
                     </el-button>
                   </slot>
@@ -304,18 +265,12 @@
             </slot>
           </el-col>
         </el-row>
-        
+
         <!-- 分页 -->
         <div v-if="showPagination" class="pagination-section">
-          <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
-            :page-sizes="[12, 24, 48, 96]"
-            layout="total, sizes, prev, pager, next, jumper"
-            :total="filteredQuestions.length"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-          />
+          <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[12, 24, 48, 96]"
+            layout="total, sizes, prev, pager, next, jumper" :total="filteredQuestions.length"
+            @size-change="handleSizeChange" @current-change="handleCurrentChange" />
         </div>
       </div>
     </div>
@@ -325,7 +280,7 @@
 <script setup>
 import { ref, reactive, computed, watch, toRefs } from 'vue'
 import { parseTime } from '@/utils/ruoyi'
-import { 
+import {
   Search, Refresh, Star, StarFilled, View, Delete,
   Collection, Check, Close, RefreshRight, Clock,
   Comment, PriceTag, Document, FolderOpened
@@ -345,7 +300,7 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  
+
   // 标题和描述
   title: {
     type: String,
@@ -359,7 +314,7 @@ const props = defineProps({
     type: [String, Object],
     default: 'Document'
   },
-  
+
   // 显示控制
   showHeader: {
     type: Boolean,
@@ -385,7 +340,7 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
-  
+
   // 筛选功能控制
   showQuestionTypeFilter: {
     type: Boolean,
@@ -411,7 +366,7 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
-  
+
   // 卡片内容控制
   showStarAction: {
     type: Boolean,
@@ -445,7 +400,7 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
-  
+
   // 布局配置
   colSm: {
     type: Number,
@@ -459,7 +414,7 @@ const props = defineProps({
     type: Number,
     default: 8
   },
-  
+
   // 初始筛选值
   initialFilters: {
     type: Object,
@@ -471,31 +426,31 @@ const props = defineProps({
       questionType: []
     })
   },
-  
+
   // 搜索关键词
   searchKeyword: {
     type: String,
     default: ''
   },
-  
+
   // 自定义获取关键词函数
   getItemSearchText: {
     type: Function,
     default: (item) => item.questionDetail?.questionText || ''
   },
-  
+
   // 自定义获取ID函数（用于取消收藏等操作）
   getItemFavoriteId: {
     type: Function,
     default: (item) => item.favoriteId
   },
-  
+
   // 自定义获取题库ID函数
   getItemBankId: {
     type: Function,
     default: (item) => item.bankId
   },
-  
+
   // 自定义获取Key函数
   getItemKey: {
     type: Function,
@@ -530,8 +485,8 @@ const questionTypes = [
   { value: 3, label: '判断题' },
   { value: 4, label: '填空题' },
   { value: 5, label: '简答题' },
-  { value: 6, label: '阅读理解' },
-  { value: 7, label: '完形填空' }
+  { value: 6, label: '组合题' },
+  { value: 7, label: '组合题' }
 ]
 
 const difficultyOptions = [
@@ -553,7 +508,7 @@ const total = computed(() => props.questions.length)
 
 const filteredQuestions = computed(() => {
   let filtered = [...props.questions]
-  
+
   // 关键词搜索
   if (localSearchKeyword.value && localSearchKeyword.value.trim()) {
     const keyword = localSearchKeyword.value.toLowerCase().trim()
@@ -562,22 +517,22 @@ const filteredQuestions = computed(() => {
       return searchText.includes(keyword)
     })
   }
-  
+
   // 题库筛选
   if (localFilters.bankId) {
     filtered = filtered.filter(item => props.getItemBankId(item) === localFilters.bankId)
   }
-  
+
   // 标星筛选
   if (localFilters.isStarred !== null) {
     filtered = filtered.filter(item => item.isStarred === localFilters.isStarred)
   }
-  
+
   // 收藏状态筛选
   if (localFilters.favoriteStatus !== null) {
     filtered = filtered.filter(item => item.favoriteStatus === localFilters.favoriteStatus)
   }
-  
+
   // 难度筛选
   if (localFilters.difficulty.length > 0) {
     filtered = filtered.filter(item => {
@@ -585,7 +540,7 @@ const filteredQuestions = computed(() => {
       return difficulty && localFilters.difficulty.includes(difficulty)
     })
   }
-  
+
   // 题型筛选
   if (localFilters.questionType.length > 0) {
     filtered = filtered.filter(item => {
@@ -593,7 +548,7 @@ const filteredQuestions = computed(() => {
       return questionType && localFilters.questionType.includes(questionType)
     })
   }
-  
+
   return filtered
 })
 
@@ -601,7 +556,7 @@ const paginatedQuestions = computed(() => {
   if (!props.showPagination) {
     return filteredQuestions.value
   }
-  
+
   const startIndex = (currentPage.value - 1) * pageSize.value
   const endIndex = startIndex + pageSize.value
   return filteredQuestions.value.slice(startIndex, endIndex)
@@ -690,8 +645,8 @@ const getQuestionTypeText = (type) => {
     3: '判断题',
     4: '填空题',
     5: '简答题',
-    6: '阅读理解',
-    7: '完形填空'
+    6: '组合题',
+    7: '组合题'
   }
   return typeMap[type] || '未知题型'
 }
@@ -768,76 +723,76 @@ const getPreviewOptions = (options) => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  
+
   .header-section {
     margin-bottom: 20px;
-    
+
     .title-section {
       display: flex;
       align-items: center;
       margin-bottom: 20px;
-      
+
       .page-title {
         font-size: 20px;
-        font-weight: 600;
-        color: #303133;
+        font-weight: 700;
+        color: #1f2937;
         margin: 0;
       }
-      
+
       .total-count {
         margin-left: 15px;
         font-size: 14px;
-        color: #909399;
-        background: #f5f7fa;
+        color: #6b7280;
+        background: #f3f4f6;
         padding: 4px 12px;
         border-radius: 12px;
       }
     }
-    
+
     .search-section {
       display: flex;
       gap: 10px;
       align-items: center;
-      
+
       .search-input {
         flex: 1;
         max-width: 400px;
       }
     }
   }
-  
+
   .content-wrapper {
     display: flex;
     flex: 1;
     gap: 20px;
-    
+
     .filter-sidebar {
       width: 240px;
       flex-shrink: 0;
-      
+
       .filter-section {
         background: #fff;
         border-radius: 8px;
         padding: 20px;
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-        
+
         .filter-title {
           font-size: 16px;
           font-weight: 600;
           margin-bottom: 20px;
           color: #303133;
         }
-        
+
         .filter-group {
           margin-bottom: 20px;
-          
+
           .filter-label {
             font-size: 14px;
             color: #606266;
             margin-bottom: 10px;
             font-weight: 500;
           }
-          
+
           .filter-options {
             .filter-checkbox {
               display: block;
@@ -845,128 +800,150 @@ const getPreviewOptions = (options) => {
             }
           }
         }
-        
+
         .filter-actions {
           margin-top: 20px;
         }
       }
     }
-    
+
     .content-main {
       flex: 1;
-      
+
       &.with-filter {
         margin-left: 0;
       }
-      
+
       .loading-container {
         padding: 40px;
         text-align: center;
       }
-      
+
       .empty-state {
         padding: 60px 20px;
         text-align: center;
       }
-      
+
       .question-list {
         .question-card-col {
           margin-bottom: 20px;
         }
-        
+
         .question-card {
           background: #fff;
-          border-radius: 8px;
+          border-radius: 16px;
+          border: 1px solid #e5e7eb;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
           overflow: hidden;
-          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-          transition: all 0.3s ease;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           cursor: pointer;
           height: 100%;
           display: flex;
           flex-direction: column;
-          
+
           &:hover {
             transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            border-color: #d1d5db;
           }
-          
+
           .card-header {
             padding: 16px 16px 12px;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid #e5e7eb;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            
+
             .question-type-badge {
               padding: 4px 12px;
               border-radius: 4px;
               font-size: 12px;
               font-weight: 500;
               color: #fff;
-              
-              &.type-single { background: #409EFF; }
-              &.type-multiple { background: #67C23A; }
-              &.type-truefalse { background: #E6A23C; }
-              &.type-fillblank { background: #F56C6C; }
-              &.type-essay { background: #909399; }
-              &.type-reading { background: #8E44AD; }
-              &.type-cloze { background: #16A085; }
+
+              &.type-single {
+                background: #409EFF;
+              }
+
+              &.type-multiple {
+                background: #67C23A;
+              }
+
+              &.type-truefalse {
+                background: #E6A23C;
+              }
+
+              &.type-fillblank {
+                background: #F56C6C;
+              }
+
+              &.type-essay {
+                background: #909399;
+              }
+
+              &.type-reading {
+                background: #8E44AD;
+              }
+
+              &.type-cloze {
+                background: #16A085;
+              }
             }
-            
+
             .header-actions {
               display: flex;
               align-items: center;
               gap: 8px;
-              
+
               .star-icon {
                 cursor: pointer;
                 font-size: 18px;
                 color: #DCDFE6;
                 transition: color 0.3s;
-                
+
                 &:hover {
                   color: #E6A23C;
                 }
-                
+
                 &.starred {
                   color: #E6A23C;
                 }
               }
             }
           }
-          
+
           .card-content {
             padding: 16px;
             flex: 1;
-            
+
             .question-text {
               margin-bottom: 16px;
               line-height: 1.6;
-              color: #303133;
+              color: #1f2937;
               font-size: 14px;
-              
+
               :deep(br) {
                 content: '';
                 display: block;
                 margin-bottom: 4px;
               }
             }
-            
+
             .options-preview {
               margin-bottom: 16px;
-              
+
               .option-preview {
                 margin-bottom: 8px;
                 display: flex;
                 align-items: flex-start;
-                
+
                 .option-letter {
                   color: #409EFF;
                   font-weight: 500;
                   margin-right: 8px;
                   flex-shrink: 0;
                 }
-                
+
                 .option-text {
                   color: #606266;
                   font-size: 13px;
@@ -974,30 +951,30 @@ const getPreviewOptions = (options) => {
                 }
               }
             }
-            
+
             .answer-preview {
               margin-bottom: 16px;
               padding: 12px;
               background: #f8f9fa;
               border-radius: 4px;
-              
+
               .preview-label {
                 font-size: 12px;
                 color: #909399;
                 margin-bottom: 4px;
               }
-              
+
               .preview-text {
                 font-size: 13px;
                 color: #606266;
                 line-height: 1.5;
               }
             }
-            
+
             .difficulty-tag {
               margin-bottom: 12px;
             }
-            
+
             .bank-info {
               display: flex;
               align-items: center;
@@ -1005,79 +982,81 @@ const getPreviewOptions = (options) => {
               margin-bottom: 12px;
               font-size: 12px;
               color: #909399;
-              
+
               .el-icon {
                 font-size: 14px;
               }
             }
-            
+
             .study-stats {
               display: flex;
               gap: 16px;
               margin-bottom: 12px;
-              
+
               .stat-item {
                 display: flex;
                 align-items: center;
                 gap: 4px;
                 font-size: 12px;
                 color: #606266;
-                
+
                 .el-icon {
                   font-size: 14px;
                 }
-                
+
                 &:first-child .el-icon {
                   color: #67C23A;
                 }
-                
+
                 &:nth-child(2) .el-icon {
                   color: #F56C6C;
                 }
-                
+
                 &:last-child .el-icon {
                   color: #409EFF;
                 }
               }
             }
-            
+
             .meta-info {
               margin-bottom: 12px;
-              
-              .notes, .tags {
+
+              .notes,
+              .tags {
                 display: flex;
                 align-items: flex-start;
                 gap: 6px;
                 font-size: 12px;
                 color: #606266;
                 margin-bottom: 6px;
-                
+
                 .el-icon {
                   font-size: 14px;
                   color: #909399;
                   flex-shrink: 0;
                   margin-top: 2px;
                 }
-                
-                .notes-text, .tags-text {
+
+                .notes-text,
+                .tags-text {
                   line-height: 1.4;
                 }
               }
             }
-            
+
             .favorite-time {
               display: flex;
               align-items: center;
               gap: 6px;
               font-size: 12px;
               color: #909399;
-              
+
               .el-icon {
                 font-size: 14px;
               }
             }
           }
-          
+
           .card-footer {
             padding: 12px 16px;
             border-top: 1px solid #f0f0f0;
@@ -1086,7 +1065,7 @@ const getPreviewOptions = (options) => {
             justify-content: flex-end;
           }
         }
-        
+
         .pagination-section {
           margin-top: 30px;
           display: flex;
@@ -1102,11 +1081,11 @@ const getPreviewOptions = (options) => {
   .question-card-grid {
     .content-wrapper {
       flex-direction: column;
-      
+
       .filter-sidebar {
         width: 100%;
       }
-      
+
       .content-main.with-filter {
         margin-left: 0;
       }

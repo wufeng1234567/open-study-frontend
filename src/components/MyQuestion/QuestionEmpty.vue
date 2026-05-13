@@ -31,7 +31,7 @@ const emit = defineEmits(['empty-action'])
 
 const emptyText = computed(() => {
   const textMap = {
-    favorite: '暂无收藏的题目',
+    favorite: '暂无收藏的题�?,
     wrong: '暂无错题记录',
     marked: '暂无斩题记录'
   }
@@ -42,11 +42,11 @@ const computedActionText = computed(() => {
   if (props.actionText) return props.actionText
   
   const textMap = {
-    favorite: '去发现题目',
-    wrong: '去练习题目',
-    marked: '去标记题目'
+    favorite: '去发现题�?,
+    wrong: '去练习题�?,
+    marked: '去标记题�?
   }
-  return textMap[props.questionType] || '去探索'
+  return textMap[props.questionType] || '去探�?
 })
 </script>
 

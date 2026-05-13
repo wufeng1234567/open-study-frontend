@@ -1,34 +1,10 @@
 import { createWebHistory, createRouter } from 'vue-router'
-/* Layout */
-import Layout from '@/layout'
-
-/**
- * Note: 路由配置项
- *
- * hidden: true                     // 当设置 true 的时候该路由不会再侧边栏出现 如401，login等页面，或者如一些编辑页面/edit/1
- * alwaysShow: true                 // 当你一个路由下面的 children 声明的路由大于1个时，自动会变成嵌套的模式--如组件页面
- *                                  // 只有一个时，会将那个子路由当做根路由显示在侧边栏--如引导页面
- *                                  // 若你想不管路由下面的 children 声明的个数都显示你的根路由
- *                                  // 你可以设置 alwaysShow: true，这样它就会忽略之前定义的规则，一直显示根路由
- * redirect: noRedirect             // 当设置 noRedirect 的时候该路由在面包屑导航中不可被点击
- * name:'router-name'               // 设定路由的名字，一定要填写不然使用<keep-alive>时会出现各种问题
- * query: '{"id": 1, "name": "ry"}' // 访问路由的默认传递参数
- * roles: ['admin', 'common']       // 访问路由的角色权限
- * permissions: ['a:a:a', 'b:b:b']  // 访问路由的菜单权限
- * meta : {
-    noCache: true                   // 如果设置为true，则不会被 <keep-alive> 缓存(默认 false)
-    title: 'title'                  // 设置该路由在侧边栏和面包屑中展示的名字
-    icon: 'svg-name'                // 设置该路由的图标，对应路径src/assets/icons/svg
-    breadcrumb: false               // 如果设置为false，则不会在breadcrumb面包屑中显示
-    activeMenu: '/system/user'      // 当路由设置了该属性，则会高亮相对应的侧边栏。
-  }
- */
 
 // 公共路由
 export const constantRoutes = [
   {
     path: '/redirect',
-    component: Layout,
+    component: () => import('@/layout/index.vue'),
     hidden: true,
     children: [
       {
@@ -57,41 +33,372 @@ export const constantRoutes = [
     component: () => import('@/views/error/401'),
     hidden: true
   },
+
+  // 后台首页
   {
-    path: '',
-    component: Layout,
-    redirect: '/index',
+    path: '/index',
+    component: () => import('@/layout/index.vue'),
+    redirect: '/index/home',
+    meta: { title: '后台首页', icon: 'dashboard' },
     children: [
       {
-        path: '/index',
-        component: () => import('@/views/index'),
+        path: 'home',
         name: 'Index',
-        meta: { title: '首页', icon: 'dashboard', affix: true }
+        component: () => import('@/views/admin/dashboard.vue'),
+        meta: { title: '后台首页', icon: 'dashboard', affix: true }
       }
     ]
   },
+
+  // 根路径重定向
+  {
+    path: '/',
+    redirect: '/index/home'
+  },
+
+  // 后台个人中心 - 使用后台 Layout
   {
     path: '/user',
-    component: Layout,
+    component: () => import('@/layout/index.vue'),
     hidden: true,
     redirect: 'noredirect',
     children: [
       {
         path: 'profile',
-        component: () => import('@/views/system/user/profile/index'),
+        component: () => import('@/views/system/user/profile/index.vue'),
         name: 'Profile',
         meta: { title: '个人中心', icon: 'user' }
       }
     ]
-  }
+  },
 
+  // 前台路由
+  {
+    path: '/front',
+    component: () => import('@/layout/front.vue'),
+    hidden: true,
+    redirect: '/front/index',
+    meta: { layout: 'front' },
+    children: [
+      {
+        path: 'index',
+        name: 'FrontIndex',
+        component: () => import('@/views/front/index.vue'),
+        meta: { title: '前台首页', layout: 'front' },
+        hidden: true
+      },
+      {
+        path: 'questionPractice',
+        name: 'FrontQuestionPractice',
+        component: () => import('@/views/questionPractice/questionPractice/index.vue'),
+        meta: { title: '题库练习', layout: 'front' },
+        hidden: true,
+        children: [
+          {
+            path: '',
+            name: 'FrontQuestionBankList',
+            component: () => import('@/views/questionPractice/questionPractice/bankList.vue'),
+            meta: { title: '题库练习', layout: 'front', keepAlive: true }
+          },
+          {
+            path: ':bankId',
+            name: 'FrontQuestionBankDetail',
+            component: () => import('@/views/questionPractice/questionPractice/bankDetail.vue'),
+            meta: { title: '题库详情', layout: 'front', keepAlive: true }
+          },
+          {
+            path: ':bankId/practice/:moduleType',
+            name: 'FrontQuestionPracticePlay',
+            component: () => import('@/views/questionPractice/questionPractice/practice.vue'),
+            meta: { title: '刷题练习', layout: 'front', keepAlive: true }
+          }
+        ]
+      },
+      {
+        path: 'tools',
+        name: 'FrontTools',
+        component: () => import('@/views/front/tools/index.vue'),
+        meta: { title: '实用工具箱', layout: 'front' },
+        redirect: '/front/tools/home',
+        children: [
+          {
+            path: 'home',
+            name: 'FrontToolsHome',
+            component: () => import('@/views/front/tools/home.vue'),
+            meta: { title: '实用工具箱', layout: 'front', keepAlive: true },
+            hidden: true
+          },
+          {
+            path: 'watermark',
+            name: 'FrontToolsWatermark',
+            component: () => import('@/views/front/resources/index.vue'),
+            meta: { title: '图片水印工具', layout: 'front', keepAlive: true },
+            hidden: true
+          },
+          {
+            path: 'convert',
+            name: 'FrontToolsConvert',
+            component: () => import('@/views/front/tools/convert.vue'),
+            meta: { title: '文档转换工具', layout: 'front', keepAlive: true },
+            hidden: true
+          },
+          {
+            path: 'image',
+            name: 'FrontToolsImage',
+            component: () => import('@/views/front/tools/image.vue'),
+            meta: { title: '图片处理工具', layout: 'front', keepAlive: true },
+            hidden: true
+          },
+          {
+            path: 'text',
+            name: 'FrontToolsText',
+            component: () => import('@/views/front/tools/text.vue'),
+            meta: { title: '文本工具', layout: 'front', keepAlive: true },
+            hidden: true
+          }
+        ]
+      },
+      {
+        path: 'profile/:userId?',
+        name: 'FrontProfile',
+        component: () => import('@/views/system/user/profile/index.vue'),
+        meta: { title: '个人中心', layout: 'front' },
+        hidden: true
+      },
+
+      // ✅ 消息中心
+      {
+        path: 'messages',
+        name: 'FrontMessages',
+        component: () => import('@/views/front/messages/index.vue'),
+        meta: { title: '消息中心', layout: 'front' },
+        redirect: '/front/messages/notifications',
+        children: [
+          {
+            path: 'notifications',
+            name: 'FrontMessagesNotifications',
+            component: () => import('@/views/front/messages/notifications.vue')
+          },
+          {
+            path: 'mentions',
+            name: 'FrontMessagesMentions',
+            component: () => import('@/views/front/messages/mentions.vue')
+          },
+          {
+            path: 'chats',
+            name: 'FrontMessagesChats',
+            component: () => import('@/views/front/messages/chats.vue')
+          }
+        ]
+      },
+
+      // ✅ 我的学习聚合页面
+      {
+        path: 'myQuestion',
+        name: 'FrontMyQuestion',
+        component: () => import('@/views/front/myQuestion/index.vue'),
+        // redirect: '/front/myQuestion/myBank',
+        meta: { title: '我的学习', layout: 'front' },
+        hidden: true,
+        children: [
+          {
+            path: 'bankCollect',
+            name: 'FrontBankCollect',
+            component: () => import('@/views/front/myQuestion/myFavoriteBank/index.vue'),
+            meta: { title: '题库收藏', layout: 'front' },
+            hidden: true
+          },
+          {
+            path: 'questionCollect',
+            name: 'FrontQuestionCollect',
+            component: () => import('@/views/front/myQuestion/myFavoriteQuestion/index.vue'),
+            meta: { title: '题目收藏', layout: 'front' },
+            hidden: true
+          },
+          {
+            path: 'wrongQuestion',
+            name: 'FrontWrongQuestion',
+            component: () => import('@/views/front/myQuestion/myMistakes/index.vue'),
+            meta: { title: '我的错题', layout: 'front' },
+            hidden: true
+          },
+          {
+            path: 'masteredQuestion',
+            name: 'FrontMasteredQuestion',
+            component: () => import('@/views/front/myQuestion/myMarked/index.vue'),
+            meta: { title: '我的斩题', layout: 'front' },
+            hidden: true
+          },
+          {
+            path: 'myBank',
+            name: 'FrontMyBank',
+            component: () => import('@/views/front/myQuestion/myBank/index.vue'),
+            meta: { title: '我的题库', layout: 'front' },
+            hidden: true
+          },
+          {
+            path: 'myNotes',
+            name: 'FrontMyNotes',
+            component: () => import('@/views/front/myQuestion/myNotes/index.vue'),
+            meta: { title: '我的笔记', layout: 'front' },
+            hidden: true
+          }
+        ]
+      },
+      // studio 改成嵌套路由
+      {
+        path: 'studio',
+        name: 'FrontStudio',
+        component: () => import('@/views/front/studio/index.vue'),  // 容器组件
+        meta: { title: '上传题库', layout: 'front' },
+        hidden: true,
+        children: [
+          {
+            path: '',
+            name: 'FrontStudioHome',
+            component: () => import('@/views/front/studio/home.vue'),  // 原 index.vue 改名为 home.vue
+            meta: { title: '上传题库', layout: 'front', keepAlive: true }
+          },
+          {
+            path: 'create',
+            name: 'FrontStudioCreate',
+            component: () => import('@/views/front/studio/create/index.vue'),
+            meta: { title: '创建题库', layout: 'front', keepAlive: true }
+          }
+        ]
+      },
+
+      {
+        path: 'english',
+        name: 'FrontEnglish',
+        component: () => import('@/views/front/english/index.vue'),
+        meta: { title: '英语学习', layout: 'front' },
+        hidden: true,
+        children: [
+          {
+            path: 'home',
+            name: 'FrontEnglishHome',
+            component: () => import('@/views/front/english/home/index.vue'),
+            meta: { title: '英语学习', layout: 'front', keepAlive: true },
+            hidden: true
+          },
+          {
+            path: 'ocr',
+            name: 'FrontEnglishOcr',
+            component: () => import('@/views/front/english/ocr/index.vue'),
+            meta: { title: '拍照识词', layout: 'front', keepAlive: true },
+            hidden: true
+          },
+          {
+            path: 'vocabulary',
+            name: 'FrontEnglishVocabulary',
+            component: () => import('@/views/front/english/vocabulary/index.vue'),
+            meta: { title: '我的词库', layout: 'front', keepAlive: true },
+            hidden: true
+          },
+          {
+            path: 'vocabulary/:id',
+            name: 'FrontEnglishVocabularyDetail',
+            component: () => import('@/views/front/english/vocabulary/detail.vue'),
+            meta: { title: '词库详情', layout: 'front', keepAlive: true },
+            hidden: true
+          },
+          {
+            path: 'listening',
+            name: 'FrontEnglishListening',
+            component: () => import('@/views/front/english/listening/index.vue'),
+            meta: { title: '听力练习', layout: 'front', keepAlive: true },
+            hidden: true
+          },
+          {
+            path: 'reading',
+            name: 'FrontEnglishReading',
+            component: () => import('@/views/front/english/reading/index.vue'),
+            meta: { title: '阅读练习', layout: 'front', keepAlive: true },
+            hidden: true
+          }
+        ]
+      },
+
+      // 知识库管理
+      {
+        path: 'knowledge',
+        name: 'FrontKnowledge',
+        component: () => import('@/views/front/knowledge/index.vue'),  // 容器组件
+        meta: { title: '知识库', layout: 'front' },
+        // redirect: '/front/knowledge/home',
+        children: [
+          {
+            path: 'home',
+            name: 'FrontKnowledgeHome',
+            component: () => import('@/views/front/knowledge/home.vue'),
+            meta: { title: '知识库', layout: 'front', keepAlive: true }
+          },
+          {
+            path: 'list',
+            name: 'FrontKnowledgeList',
+            component: () => import('@/views/front/knowledge/list.vue'),
+            meta: { title: '知识库列表', layout: 'front', keepAlive: true }
+          },
+          {
+            path: 'upload/:id',
+            name: 'FrontKnowledgeUpload',
+            component: () => import('@/views/front/knowledge/upload.vue'),
+            meta: { title: '上传文档', layout: 'front', keepAlive: true }
+          },
+          {
+            path: 'qa/:id',
+            name: 'FrontKnowledgeQa',
+            component: () => import('@/views/front/knowledge/qa.vue'),
+            meta: { title: '知识库问答', layout: 'front', keepAlive: true }
+          },
+          {
+            path: 'docs/:id',
+            name: 'FrontKnowledgeDocs',
+            component: () => import('@/views/front/knowledge/docs.vue'),
+            meta: { title: '文档列表', layout: 'front', keepAlive: true }
+          }
+        ]
+      },
+
+      // 学习分享
+      {
+        path: 'notes',
+        name: 'FrontNotes',
+        component: () => import('@/views/front/notes/index.vue'),
+        meta: { title: '学习分享', layout: 'front' },
+        hidden: true,
+        children: [
+          {
+            path: 'list',
+            name: 'FrontNotesList',
+            component: () => import('@/views/front/notes/list.vue'),
+            meta: { title: '学习分享', layout: 'front', keepAlive: true }
+          },
+          {
+            path: 'detail/:id',
+            name: 'FrontNotesDetail',
+            component: () => import('@/views/front/notes/detail.vue'),
+            meta: { title: '笔记详情', layout: 'front', keepAlive: true }
+          },
+          {
+            path: 'editor',
+            name: 'FrontNotesEditor',
+            component: () => import('@/views/front/notes/editor.vue'),
+            meta: { title: '写笔记', layout: 'front' },
+            hidden: true
+          }
+        ]
+      }
+    ]
+  }
 ]
 
-// 动态路由，基于用户权限动态去加载
+// 动态路由
 export const dynamicRoutes = [
   {
     path: '/system/user-auth',
-    component: Layout,
+    component: () => import('@/layout/index.vue'),
     hidden: true,
     permissions: ['system:user:edit'],
     children: [
@@ -105,7 +412,7 @@ export const dynamicRoutes = [
   },
   {
     path: '/system/role-auth',
-    component: Layout,
+    component: () => import('@/layout/index.vue'),
     hidden: true,
     permissions: ['system:role:edit'],
     children: [
@@ -119,7 +426,7 @@ export const dynamicRoutes = [
   },
   {
     path: '/system/dict-data',
-    component: Layout,
+    component: () => import('@/layout/index.vue'),
     hidden: true,
     permissions: ['system:dict:list'],
     children: [
@@ -133,7 +440,7 @@ export const dynamicRoutes = [
   },
   {
     path: '/monitor/job-log',
-    component: Layout,
+    component: () => import('@/layout/index.vue'),
     hidden: true,
     permissions: ['monitor:job:list'],
     children: [
@@ -147,7 +454,7 @@ export const dynamicRoutes = [
   },
   {
     path: '/tool/gen-edit',
-    component: Layout,
+    component: () => import('@/layout/index.vue'),
     hidden: true,
     permissions: ['tool:gen:edit'],
     children: [
@@ -159,8 +466,6 @@ export const dynamicRoutes = [
       }
     ]
   }
-
-
 ]
 
 const router = createRouter({
@@ -173,6 +478,6 @@ const router = createRouter({
       return { top: 0 }
     }
   },
-});
+})
 
-export default router;
+export default router

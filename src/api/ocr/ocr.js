@@ -5,6 +5,7 @@ export function ocrRecognize(data) {
   return request({
     url: '/ocr/recognize',
     method: 'post',
-    data: data
+    data: data,
+    timeout: 120000
   })
 }
