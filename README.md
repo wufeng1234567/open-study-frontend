@@ -1,864 +1,602 @@
-# OpenStudy - 开放学习平台
+# OpenStudy 前端 - 开放学习平台
+
+<p align="center">
+  <img alt="logo" src="https://oscimg.oschina.net/oscnet/up-d3d0a9303e11d522a06cd263f3079027715.png">
+</p>
+
+<h4 align="center">基于 Vue 3 + Element Plus 的智能化学习平台前端</h4>
+
+<p align="center">
+  <a href="https://vuejs.org/"><img src="https://img.shields.io/badge/Vue-3.x-brightgreen.svg"></a>
+  <a href="https://vitejs.dev/"><img src="https://img.shields.io/badge/Vite-5.x-blue.svg"></a>
+  <a href="https://element-plus.org/"><img src="https://img.shields.io/badge/Element%20Plus-2.x-orange.svg"></a>
+  <a href="https://pinia.vuejs.org/"><img src="https://img.shields.io/badge/Pinia-2.x-yellow.svg"></a>
+</p>
+
+---
 
 ## 项目简介
 
-OpenStudy 是一个追求**开源、灵活、自由度高**的在线学习平台，致力于为在校学生打造一个高效、专注、个性化的自主学习环境。系统深度集成 AI 能力，降低学习门槛，采用**若依前后端分离框架**作为基础架构，前端使用 Vue3 + Vite 构建。
+**OpenStudy 前端**是基于 Vue 3 + Vite 构建的现代化单页应用，与 Spring Boot 3 后端配合，提供完整的智能化学习平台用户体验。系统深度集成 AI 能力，支持智能刷题、知识分享、英语学习、RAG 知识库等多种功能模块。
 
-### 核心特性
+---
 
-- **开源透明**：代码开放，架构清晰，便于二次开发
-- **高自由度**：模块化设计，功能可插拔，灵活扩展
-- **AI 集成**：深度融合大模型能力，支持智能问答、OCR 识别、AI 出题等
-- **低门槛设计**：简洁易用的界面，降低用户学习成本
+## 技术栈
 
-### 技术选型
+### 核心技术
 
-| 层级 | 技术栈 | 版本 |
-|------|--------|------|
-| 后端框架 | Spring Boot 3 | 3.5.11 |
-| 安全框架 | Spring Security | 6.x |
-| ORM | MyBatis-Plus | 3.0.5 |
-| 分页 | PageHelper | 2.1.1 |
-| 前端框架 | Vue 3 + Composition API | 3.4.0 |
-| 构建工具 | Vite | 5.0.4 |
-| UI 组件 | Element Plus | 2.13.7 |
-| 状态管理 | Pinia | 2.1.7 |
-| 路由 | Vue Router | 4.2.5 |
-| 样式 | SCSS | 1.69.5 |
+| 技术 | 版本 | 说明 |
+|------|------|------|
+| Vue | 3.x | 渐进式 JavaScript 框架 |
+| Vite | 5.x | 下一代前端构建工具 |
+| Element Plus | 2.x | Vue 3 UI 组件库 |
+| Pinia | 2.x | Vue 状态管理 |
+| Vue Router | 4.x | Vue 官方路由 |
+| Axios | 0.27.x | HTTP 请求库 |
+| SCSS | 1.69.x | CSS 预处理器 |
 
-### 未来规划
+### AI 相关
 
-- **Redis Stack 向量化**：计划引入 Redis Stack 实现全文检索和向量相似度匹配，增强 RAG 能力
+| 技术 | 说明 |
+|------|------|
+| TipTap | 富文本编辑器 |
+| VueUse | Vue 组合式 API 工具集 |
+
+---
+
+## 系统架构
+
+### 前后台分离架构
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        用户浏览器                             │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Vue 3 前端 (Port 80)                    │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │                    /front/*                         │    │
+│  │                                                       │    │
+│  │   首页 / 题库练习 / 我的学习 / 英语学习 / 知识库       │    │
+│  │   学习分享 / 工具箱 / 题库搭建 / 消息中心              │    │
+│  │                                                       │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │                    /index/*                          │    │
+│  │   首页 / 用户管理 / 角色管理 / 菜单管理 / 系统监控     │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │              /login  /register                       │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                     Proxy: /dev-api/* → :8086
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   Spring Boot 3 后端 (Port 8086)             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 前端路由架构
+
+```
+/
+├── /login                    # 登录页面
+├── /register                 # 注册页面
+├── /index/*                  # 后台管理页面（带左侧菜单）
+│   └── layout/index.vue      # 后台布局组件
+│
+└── /front/*                  # 前台用户页面（统一头部底部）
+    └── layout/front.vue      # 前台布局组件（Header + Footer + AI助手）
+```
+
+---
+
+## 功能模块
+
+### 1. 题库练习模块
+
+**路由**: `/front/questionPractice`
+
+| 页面 | 路由 | 功能 |
+|------|------|------|
+| 题库列表 | `/front/questionPractice` | 浏览所有公开题库，收藏管理 |
+| 题库详情 | `/front/questionPractice/:bankId` | 题库信息、章节统计、专项练习入口 |
+| 刷题练习 | `/front/questionPractice/:bankId/practice/:moduleType` | 顺序/随机/自定义/模拟考试 |
+
+**核心组件**:
+- `BankCardGrid.vue` - 题库卡片网格展示
+- `BankCardList.vue` - 题库卡片列表展示
+- `PracticeComponent/` - 刷题核心组件
+- `PracticeSettings.vue` - 刷题设置弹窗
+
+**功能特色**:
+- 四种练习模式：顺序练习、随机练习、自定义练习、模拟考试
+- 刷题进度实时保存
+- 错题自动收录到错题本
+- 斩题标记已掌握题目
+- 收藏重点题目
+
+### 2. 我的学习模块
+
+**路由**: `/front/myQuestion`
+
+| 页面 | 路由 | 功能 |
+|------|------|------|
+| 我的学习 | `/front/myQuestion` | 学习模块主页（左侧导航） |
+| 我的题库 | `/front/myQuestion/myBank` | 管理创建的题库 |
+| 题库收藏 | `/front/myQuestion/bankCollect` | 收藏的题库列表 |
+| 题目收藏 | `/front/myQuestion/questionCollect` | 收藏的题目 |
+| 我的错题 | `/front/myQuestion/wrongQuestion` | 错题复习 |
+| 我的斩题 | `/front/myQuestion/masteredQuestion` | 已掌握题目 |
+| 我的笔记 | `/front/myQuestion/myNotes` | 个人笔记管理 |
+
+**核心组件**:
+- `LeftMenu.vue` - 左侧菜单导航
+- `QuestionBankDetail/` - 题库详情组件（被多页面复用）
+
+### 3. 学习笔记模块
+
+**路由**: `/front/notes`
+
+| 页面 | 路由 | 功能 |
+|------|------|------|
+| 笔记广场 | `/front/notes/list` | 浏览其他用户分享的笔记 |
+| 笔记详情 | `/front/notes/detail/:id` | 查看笔记内容、评论互动 |
+| 写笔记 | `/front/notes/editor` | 创建/编辑笔记 |
+
+**核心组件**:
+- `CommentSection/` - 评论组件
+- TipTap 富文本编辑器（图片、代码块支持）
+
+**功能特色**:
+- 富文本编辑：支持插入图片、代码块、链接
+- 笔记关联题库：一键跳转到相关题库练习
+- 公开分享：优质笔记可发布到笔记广场
+- 互动评论：对笔记进行评论和点赞
+- 留言功能：笔记作者可回复评论
+
+### 4. AI 智能助手
+
+**组件**: `components/AiAssistant/`
+
+**功能特色**:
+- 全局悬浮助手：页面右下角固定
+- 多 AI 提供商切换：智谱 AI / DeepSeek
+- 流式输出：SSE 实时显示回答
+- 上下文记忆：多轮对话连贯
+- RAG 知识库问答：基于上传文档的精准回答
+
+### 5. 英语学习模块
+
+**路由**: `/front/english`
+
+| 页面 | 路由 | 功能 |
+|------|------|------|
+| 英语学习 | `/front/english/home` | 模块主页 |
+| 拍照识词 | `/front/english/ocr` | OCR 识别图片中的单词 |
+| 我的词库 | `/front/english/vocabulary` | 词汇管理 |
+| 词库详情 | `/front/english/vocabulary/:id` | 查看词库单词 |
+| 听力练习 | `/front/english/listening` | 听力材料练习 |
+| 阅读练习 | `/front/english/reading` | 阅读理解训练 |
+
+**核心组件**:
+- `OcrRecognizer/` - OCR 识别组件
+- `Dictation/` - 听写组件
+
+### 6. 知识库模块
+
+**路由**: `/front/knowledge`
+
+| 页面 | 路由 | 功能 |
+|------|------|------|
+| 知识库 | `/front/knowledge/home` | 模块主页 |
+| 知识库列表 | `/front/knowledge/list` | 浏览知识库 |
+| 上传文档 | `/front/knowledge/upload/:id` | 上传知识库文档 |
+| 文档列表 | `/front/knowledge/docs/:id` | 查看知识库文档 |
+| 知识问答 | `/front/knowledge/qa/:id` | RAG 智能问答 |
+
+**功能特色**:
+- 文档上传：支持 PDF、DOCX、TXT、MD
+- 智能分块：自动将文档分割为可检索片段
+- RAG 问答：基于文档内容的精准回答
+- 向量检索：语义相似度匹配
+
+### 7. 实用工具箱
+
+**路由**: `/front/tools`
+
+| 页面 | 路由 | 功能 |
+|------|------|------|
+| 工具箱主页 | `/front/tools/home` | 工具列表 |
+| 图片水印 | `/front/tools/watermark` | 添加水印 |
+| 文档转换 | `/front/tools/convert` | 格式转换 |
+| 图片处理 | `/front/tools/image` | 压缩裁剪 |
+| 文本工具 | `/front/tools/text` | 文本处理 |
+
+### 8. 题库搭建
+
+**路由**: `/front/studio`
+
+| 页面 | 路由 | 功能 |
+|------|------|------|
+| 题库搭建 | `/front/studio` | 题库管理 |
+| 创建题库 | `/front/studio/create` | 新建题库、添加章节题目 |
+
+**核心组件**:
+- `QuestionBuilder.vue` - 题目构建器
+- `QuestionFullEditor.vue` - 题目完整编辑器
+- `CardOption.vue` - 卡片选项组件
+
+**功能特色**:
+- 可视化创建题库
+- 按章节组织题目
+- AI 辅助出题：根据知识点描述自动生成题目
+- 支持多种题型：单选、多选、判断、填空、阅读理解
+
+### 9. 消息中心
+
+**路由**: `/front/messages`
+
+| 页面 | 路由 | 功能 |
+|------|------|------|
+| 通知 | `/front/messages/notifications` | 系统通知 |
+| @我 | `/front/messages/mentions` | @提及通知 |
+| 私信 | `/front/messages/chats` | 用户私信聊天 |
+
+### 10. 后台管理
+
+**路由**: `/index/*`
+
+| 模块 | 路由 | 功能 |
+|------|------|------|
+| 首页 | `/index/home` | 数据统计仪表盘 |
+| 用户管理 | `/system/user` | 用户增删改查 |
+| 角色管理 | `/system/role` | 角色权限配置 |
+| 菜单管理 | `/system/menu` | 系统菜单配置 |
+| 部门管理 | `/system/dept` | 组织架构管理 |
+| 字典管理 | `/system/dict` | 数据字典维护 |
+| 参数管理 | `/system/config` | 系统参数配置 |
+| 通知公告 | `/system/notice` | 公告发布管理 |
+| 在线用户 | `/monitor/online` | 实时在线监控 |
+| 操作日志 | `/monitor/operlog` | 操作审计追踪 |
+| 登录日志 | `/monitor/logininfor` | 登录记录查询 |
+| 代码生成 | `/tool/gen` | CRUD 代码生成 |
+
+---
+
+## 页面路由
+
+### 前台用户页面
+
+| 路径 | 功能 |
+|------|------|
+| `/front/index` | 前台首页 |
+| `/front/questionPractice` | 题库练习 |
+| `/front/questionPractice/:bankId` | 题库详情 |
+| `/front/questionPractice/:bankId/practice/:moduleType` | 刷题练习 |
+| `/front/myQuestion` | 我的学习 |
+| `/front/myQuestion/myBank` | 我的题库 |
+| `/front/myQuestion/bankCollect` | 题库收藏 |
+| `/front/myQuestion/questionCollect` | 题目收藏 |
+| `/front/myQuestion/wrongQuestion` | 我的错题 |
+| `/front/myQuestion/masteredQuestion` | 我的斩题 |
+| `/front/myQuestion/myNotes` | 我的笔记 |
+| `/front/english` | 英语学习 |
+| `/front/knowledge` | 知识库 |
+| `/front/notes` | 学习分享 |
+| `/front/tools` | 实用工具箱 |
+| `/front/studio` | 上传题库 |
+| `/front/messages` | 消息中心 |
+| `/front/profile` | 个人中心 |
+
+### 后台管理页面
+
+| 路径 | 功能 |
+|------|------|
+| `/index/home` | 后台首页 |
+| `/system/user` | 用户管理 |
+| `/system/role` | 角色管理 |
+| `/system/menu` | 菜单管理 |
+| `/system/dept` | 部门管理 |
+| `/system/dict` | 字典管理 |
+| `/system/config` | 参数管理 |
+| `/system/notice` | 通知公告 |
+| `/monitor/online` | 在线用户 |
+| `/monitor/operlog` | 操作日志 |
+| `/monitor/logininfor` | 登录日志 |
+| `/tool/gen` | 代码生成 |
+
+### 认证页面
+
+| 路径 | 功能 |
+|------|------|
+| `/login` | 登录页面 |
+| `/register` | 注册页面 |
+
+---
+
+## 公共组件
+
+| 组件路径 | 功能说明 |
+|----------|----------|
+| `AiAssistant/` | AI 悬浮助手组件 |
+| `BankCardGrid/` | 题库卡片网格组件 |
+| `BankCardList/` | 题库卡片列表组件 |
+| `FavoriteButton/` | 收藏按钮组件 |
+| `PracticeComponent/` | 刷题核心组件 |
+| `QuestionBankDetail/` | 题库详情组件 |
+| `ImageUpload/` | 图片上传组件 |
+| `CommentSection/` | 评论组件 |
+| `OcrRecognizer/` | OCR 识别组件 |
+| `Dictation/` | 听写组件 |
 
 ---
 
 ## 项目结构
 
 ```
-d:\OpenStudy\
-├── .vscode/                      # VSCode 配置
-├── logs/                         # 日志文件
-├── openstudy-server-springboot3/  # 后端项目（Spring Boot 3）
-│   ├── openstudy-admin/          # 主应用模块
-│   │   └── src/main/java/com/openstudy/
-│   │       ├── ai/               # AI 模块（RAG、问答、出题）
-│   │       ├── carousel/         # 轮播图模块
-│   │       ├── courses/          # 课程模块
-│   │       ├── favoriteBank/     # 收藏题库模块
-│   │       ├── favoriteQuestion/  # 收藏题目模块
-│   │       ├── noteCategory/      # 笔记分类模块
-│   │       ├── noteImage/         # 笔记图片模块
-│   │       ├── notes/             # 笔记模块
-│   │       ├── ocr/               # OCR 识别模块
-│   │       ├── questionBank/      # 题库模块
-│   │       ├── questionError/     # 错题模块
-│   │       ├── questionMain/       # 题目模块
-│   │       ├── questionMarked/     # 标记题目模块
-│   │       ├── sensitiveWord/      # 敏感词模块
-│   │       ├── system/             # 系统模块（用户、角色、字典）
-│   │       └── web/                # Web 层（通用上传、监控）
-│   ├── openstudy-common/         # 通用模块
-│   ├── openstudy-framework/      # 框架模块
-│   ├── openstudy-generator/      # 代码生成器
-│   ├── openstudy-quartz/         # 定时任务模块
-│   ├── openstudy-system/          # 系统模块（若依原有）
-│   └── sql/                      # SQL 脚本
+openstudy-vue3/
+├── src/
+│   ├── api/                        # API 接口封装
+│   │   ├── ai/                     # AI 相关接口
+│   │   ├── carousel/               # 轮播图接口
+│   │   ├── courses/                # 课程接口
+│   │   ├── document/               # 文档转换接口
+│   │   ├── english/                # 英语学习接口
+│   │   ├── favoriteBank/           # 题库收藏接口
+│   │   ├── favoriteNote/           # 笔记收藏接口
+│   │   ├── favoriteQuestion/       # 题目收藏接口
+│   │   ├── knowledge/             # 知识库接口
+│   │   ├── noteCategory/          # 笔记分类接口
+│   │   ├── noteImage/             # 笔记图片接口
+│   │   ├── notes/                 # 笔记接口
+│   │   ├── ocr/                  # OCR 接口
+│   │   ├── questionBank/          # 题库接口
+│   │   ├── questionError/         # 错题接口
+│   │   ├── questionMain/          # 题目接口
+│   │   ├── questionMarked/        # 斩题接口
+│   │   ├── system/                # 系统接口
+│   │   ├── wordBooks/             # 单词本接口
+│   │   ├── words/                 # 单词接口
+│   │   └── login.js               # 登录注册接口
+│   │
+│   ├── assets/                     # 静态资源
+│   │   ├── icons/                 # SVG 图标
+│   │   ├── images/               # 图片资源
+│   │   └── styles/               # 全局样式
+│   │       ├── btn.scss           # 按钮样式
+│   │       ├── element-ui.scss    # Element Plus 覆盖
+│   │       ├── index.scss         # 全局样式入口
+│   │       └── variables.module.scss  # SCSS 变量
+│   │
+│   ├── components/                 # 公共组件
+│   │   ├── AiAssistant/          # AI 悬浮助手
+│   │   ├── AiAnalysisDialog/     # AI 分析弹窗
+│   │   ├── AiModelManager/       # AI 模型管理
+│   │   ├── BankCardGrid/         # 题库卡片网格
+│   │   ├── BankCardList/         # 题库卡片列表
+│   │   ├── CommentSection/       # 评论组件
+│   │   ├── Dictation/            # 听写组件
+│   │   ├── FavoriteButton/       # 收藏按钮
+│   │   ├── ImageUpload/          # 图片上传
+│   │   ├── OcrRecognizer/        # OCR 识别
+│   │   ├── PracticeComponent/    # 刷题组件
+│   │   │   ├── PracticeSettings.vue    # 刷题设置
+│   │   │   ├── QuestionCard.vue        # 题目卡片
+│   │   │   ├── AnswerOptions.vue       # 答题选项
+│   │   │   └── ...
+│   │   └── QuestionBankDetail/   # 题库详情
+│   │
+│   ├── composables/                # 组合式函数
+│   │   └── useAuth.js            # 权限判断 hooks
+│   │
+│   ├── directive/                  # 自定义指令
+│   │   └── permission/            # 权限指令
+│   │
+│   ├── layout/                     # 布局组件
+│   │   ├── index.vue              # 后台布局（侧边栏+主内容）
+│   │   ├── front.vue              # 前台布局（头部+底部+AI助手）
+│   │   └── components/            # 布局子组件
+│   │       ├── Sidebar/           # 侧边栏
+│   │       ├── Navbar.vue         # 导航栏
+│   │       ├── TagsView.vue       # 标签页
+│   │       └── AppMain.vue        # 主内容区
+│   │
+│   ├── plugins/                    # 插件配置
+│   │   ├── element.js             # Element Plus 按需引入
+│   │   └── index.js               # 插件入口
+│   │
+│   ├── router/                     # 路由配置
+│   │   └── index.js               # 路由定义
+│   │
+│   ├── store/                      # Pinia 状态管理
+│   │   └── modules/
+│   │       ├── user.js            # 用户状态
+│   │       ├── permission.js      # 权限状态
+│   │       ├── app.js             # 应用状态
+│   │       ├── settings.js        # 设置状态
+│   │       ├── tagsView.js        # 标签页状态
+│   │       └── frontPageCache.js  # 前台页面缓存
+│   │
+│   ├── utils/                      # 工具函数
+│   │   ├── request.js             # Axios 封装
+│   │   ├── auth.js               # 认证工具
+│   │   ├── permission.js          # 权限判断
+│   │   ├── theme.js              # 主题处理
+│   │   ├── index.js              # 通用工具
+│   │   └── validate.js            # 表单验证
+│   │
+│   └── views/                      # 页面组件
+│       ├── admin/                 # 后台页面
+│       │   └── dashboard.vue     # 后台首页
+│       │
+│       ├── front/                 # 前台页面
+│       │   ├── index.vue         # 前台首页
+│       │   ├── myQuestion/       # 我的学习
+│       │   ├── questionPractice/ # 题库练习
+│       │   ├── notes/           # 学习分享
+│       │   ├── knowledge/       # 知识库
+│       │   ├── english/         # 英语学习
+│       │   ├── tools/           # 实用工具
+│       │   ├── studio/         # 题库搭建
+│       │   └── messages/        # 消息中心
+│       │
+│       ├── system/               # 系统配置页面
+│       │   ├── user/            # 用户管理
+│       │   ├── role/            # 角色管理
+│       │   ├── menu/            # 菜单管理
+│       │   └── ...
+│       │
+│       ├── monitor/             # 系统监控页面
+│       │
+│       ├── login.vue            # 登录页面
+│       ├── register.vue         # 注册页面
+│       └── error/               # 错误页面
+│           ├── 401.vue
+│           └── 404.vue
 │
-└── openstudy-vue3/               # 前端项目（Vue 3）
-    ├── src/
-    │   ├── api/                  # API 接口定义
-    │   │   ├── ai/               # AI 相关接口
-    │   │   ├── carousel/          # 轮播图接口
-    │   │   ├── english/           # 英语学习接口
-    │   │   ├── favoriteBank/      # 收藏题库接口
-    │   │   ├── favoriteQuestion/  # 收藏题目接口
-    │   │   ├── knowledge/        # 知识库接口
-    │   │   ├── notes/            # 笔记接口
-    │   │   ├── questionBank/     # 题库接口
-    │   │   ├── questionError/    # 错题接口
-    │   │   ├── questionMain/      # 题目接口
-    │   │   ├── questionMarked/    # 标记题目接口
-    │   │   ├── system/           # 系统接口（用户、角色、字典）
-    │   │   ├── wordBooks/         # 单词本接口
-    │   │   ├── words/             # 单词接口
-    │   │   └── ...
-    │   ├── assets/               # 静态资源
-    │   ├── components/           # 公共组件
-    │   │   ├── AiAssistant/      # AI 悬浮助手
-    │   │   ├── CommentSection/    # 评论组件
-    │   │   ├── Dictation/         # 听写组件
-    │   │   ├── ImageUpload/       # 图片上传组件
-    │   │   ├── MyQuestion/        # 题目管理组件
-    │   │   ├── OcrRecognizer/     # OCR 识别组件
-    │   │   ├── PracticeComponent/ # 练习组件
-    │   │   └── ...
-    │   ├── composables/          # 组合式函数
-    │   ├── directive/            # 自定义指令
-    │   ├── layout/               # 布局组件
-    │   │   ├── front.vue         # 前台布局（keep-alive）
-    │   │   └── index.vue          # 后台布局
-    │   ├── plugins/              # 插件配置
-    │   ├── router/               # 路由配置
-    │   ├── store/                # Pinia 状态管理
-    │   │   └── modules/
-    │   │       ├── frontPageCache.js  # 前台页面缓存
-    │   │       ├── user.js            # 用户状态
-    │   │       ├── permission.js      # 权限状态
-    │   │       └── ...
-    │   ├── utils/                # 工具函数
-    │   │   ├── request.js        # Axios 封装
-    │   │   ├── permission.js     # 权限判断
-    │   │   ├── auth.js           # 认证工具
-    │   │   └── ...
-    │   └── views/
-    │       ├── front/            # 前台页面
-    │       │   ├── english/      # 英语学习
-    │       │   ├── knowledge/    # 知识库
-    │       │   ├── myQuestion/   # 我的题目
-    │       │   ├── notes/        # 学习分享
-    │       │   └── studio/       # 工作室
-    │       └── admin/            # 后台页面
-    ├── .env.development         # 开发环境变量
-    └── package.json
+├── .env.development              # 开发环境变量
+├── .env.production               # 生产环境变量
+├── vite.config.js               # Vite 配置
+└── package.json                 # 依赖配置
+```
+
+---
+
+## 快速开始
+
+### 环境要求
+
+- Node.js 16+
+- pnpm / npm / yarn
+
+### 安装依赖
+
+```bash
+cd openstudy-vue3
+pnpm install
+```
+
+### 开发启动
+
+```bash
+pnpm dev
+```
+
+### 构建生产
+
+```bash
+pnpm build
 ```
 
 ---
 
 ## 环境配置
 
-### 前端环境变量 (.env.development)
+### 开发环境变量 (.env.development)
 
 ```bash
-VITE_APP_BASE_API=http://localhost:8080
-VITE_PORT=8081
+# 页面标题
+VITE_APP_TITLE = openstudy
+
+# 环境标识
+VITE_APP_ENV = 'development'
+
+# API 基础路径（代理到后端）
+VITE_APP_BASE_API = '/dev-api'
 ```
 
-### 后端配置 (application.yml)
-
-```yaml
-ruoyi:
-  name: RuoYi
-  version: 3.9.2
-  copyrightYear: 2026
-  profile: D:/ruoyi/uploadPath  # 文件上传路径
-
-ai:
-  default-provider: zhipuai
-  fallback-provider: deepseek
-  providers:
-    zhipuai:
-      name: 智谱AI
-      model: glm-4-plus
-      enabled: true
-    deepseek:
-      name: DeepSeek
-      model: deepseek-chat
-      enabled: true
-```
-
-### 端口说明
-
-| 服务 | 端口 | 说明 |
-|------|------|------|
-| 前端 | 8081 | Vue Dev Server |
-| 后端 | 8080 | Spring Boot |
-| Redis | 6379 | 缓存、向量化（规划） |
-
----
-
-## 快速开始
-
-### 安装依赖
-
-```bash
-# 前端
-cd openstudy-vue3
-pnpm install
-
-# 后端（使用 Maven）
-cd openstudy-server-springboot3
-mvn clean install
-```
-
-### 启动项目
-
-```bash
-# 前端开发模式
-cd openstudy-vue3
-pnpm run dev
-
-# 后端启动（IDE 中运行或使用 mvn spring-boot:run）
-```
-
-### 默认账号
-
-| 角色 | 用户名 | 密码 |
-|------|--------|------|
-| 管理员 | admin | 123456 |
-| 普通用户 | common | 123456 |
-
----
-
-## ⚠️ 重要开发规范（AI 必读）
-
-### 1. 若依框架 API 响应格式 ⚠️
-
-本系统后端接口遵循若依框架规范，**不同类型接口返回格式不同**：
-
-#### 分页列表接口（TableDataInfo）
-
-```json
-{
-  "code": 200,
-  "rows": [...],
-  "total": 100
-}
-```
-
-**前端取值**：`res.rows`、`res.total`
-
-#### 详情/非分页接口（AjaxResult）
-
-```json
-{
-  "code": 200,
-  "msg": "操作成功",
-  "data": { ... }
-}
-```
-
-**前端取值**：`res.data`
-
-#### 判断规则
-
-| Controller 返回类型 | 取值方式 |
-|---------------------|----------|
-| `TableDataInfo` 或调用 `startPage()` | `res.rows` |
-| `AjaxResult` | `res.data` |
-| `AjaxResult.success(pageInfo)` | `res.data.list`（PageHelper） |
-
-#### 常见错误
+### Vite 代理配置
 
 ```javascript
-// ❌ 错误：分页接口数据在 res.rows，不是 res.data
-const notes = res.data || []
-
-// ✅ 正确：分页接口
-const notes = res.rows || []
-
-// ⚠️ 注意：评论接口返回的是 res.data.list（PageHelper）
-const commentList = res.data?.list || []
-```
-
----
-
-### 2. 用户信息获取规范
-
-#### 正确方式
-
-```javascript
-import useUserStore from '@/store/modules/user'
-
-const userStore = useUserStore()
-
-// 获取用户 ID（兼容多种字段名）
-const userId = userStore.id || userStore.userId || userStore.user_id
-
-// 获取用户名
-const userName = userStore.name
-
-// 获取头像（自动处理路径前缀）
-const avatar = userStore.avatar
-```
-
-#### 用户信息字段说明
-
-| Pinia 字段 | 说明 |
-|-----------|------|
-| `id` | 用户 ID |
-| `name` | 用户名 |
-| `avatar` | 头像 URL（已拼接前缀） |
-| `roles` | 角色数组 |
-| `permissions` | 权限标识数组 |
-| `token` | 登录令牌 |
-
-#### ⚠️ 重要：传递 userId 到后端
-
-**凡是调用需要用户个人配置的 API（如 AI 接口调用用户的自定义 API Key），必须传递 `userId`**：
-
-```javascript
-// ✅ 正确：传递 userId，后端能获取用户配置的 AI key
-const res = await generateQuestionsSync({
-  knowledgePoint: 'Java 线程',
-  questionType: 'single',
-  count: 3,
-  provider: 'deepseek',
-  userId: userStore.id  // 必须传递！
-})
-
-// ❌ 错误：不传 userId，后端只能获取到 userId=0，导致使用配置文件中的无效 key
-const res = await generateQuestionsSync({
-  knowledgePoint: 'Java 线程',
-  questionType: 'single',
-  count: 3,
-  provider: 'deepseek'
-  // 缺少 userId！
-})
-```
-
-**常见需要传 userId 的场景**：
-- AI 出题接口
-- AI 聊天接口
-- 任何需要用户个人 AI 配置的接口
-
----
-
-### 3. 图片上传与路径处理规范
-
-#### ImageUpload 组件使用
-
-```vue
-<template>
-  <ImageUpload v-model="imageUrl" :limit="3" :fileSize="5" />
-</template>
-
-<script setup>
-import ImageUpload from '@/components/ImageUpload/index.vue'
-const imageUrl = ref('')
-</script>
-```
-
-#### 路径前缀处理规则
-
-**上传时**：组件自动处理，存储时**不带前缀**
-
-**展示时**：组件内部自动拼接 `VITE_APP_BASE_API` 前缀
-
-**手动处理图片路径**：
-
-```javascript
-const baseUrl = import.meta.env.VITE_APP_BASE_API
-
-// 存储时：移除前缀
-const pathToSave = imageUrl.replace(baseUrl, '')
-
-// 展示时：确保有前缀
-const pathToShow = imageUrl.includes(baseUrl) ? imageUrl : baseUrl + imageUrl
-```
-
----
-
-### 4. 前端页面缓存规范（keep-alive + Pinia）
-
-#### 核心问题
-
-使用 `keep-alive` 缓存的组件，当路由参数变化时，`onMounted` 不会重新执行，需要同时使用 `onActivated` 和 `watch`。
-
-#### 标准模板（带参数路由）
-
-```javascript
-import { ref, onMounted, onActivated, watch } from 'vue'
-import { useRoute } from 'vue-router'
-
-const route = useRoute()
-const detailData = ref({})
-
-const fetchData = async () => {
-    const id = route.params.id
-    if (!id) return
-    const res = await getDetail(id)
-    detailData.value = res.data || {}
-}
-
-onMounted(() => {
-    fetchData()
-})
-
-onActivated(() => {
-    const newId = route.params.id
-    if (!newId) return
-    if (detailData.value.id !== Number(newId)) {
-        fetchData()
-    }
-})
-
-// ⚠️ 同一页面内参数变化（如上下篇导航）
-watch(() => route.params.id, (newId, oldId) => {
-    if (newId && newId !== oldId) {
-        fetchData()
-    }
-})
-```
-
-#### 三个钩子分工
-
-| 钩子 | 触发场景 |
-|------|----------|
-| `onMounted` | 首次进入页面 |
-| `onActivated` | 从其他模块切换回来（keep-alive 恢复） |
-| `watch route.params.id` | 同一页面内参数变化（上下篇切换） |
-
-#### 已应用此方案的页面
-
-- `src/views/front/notes/detail.vue` - 笔记详情
-- `src/views/front/english/vocabulary/detail.vue` - 词库详情
-- `src/views/front/knowledge/docs.vue` - 知识库文档
-
----
-
-### 5. 防重复提交规范
-
-#### Axios 请求拦截器自动处理
-
-`request.js` 已实现防重复提交机制：
-
-```javascript
-// 同一请求 1 秒内重复提交会被拦截
-const interval = 1000
-if (s_data === requestObj.data && requestObj.time - s_time < interval) {
-    return Promise.reject(new Error('数据正在处理，请勿重复提交'))
-}
-```
-
-#### 手动禁用防重复提交
-
-```javascript
-// 在特定接口中禁用
-export function someAction(data) {
-  return request({
-    url: '/some/action',
-    headers: {
-      repeatSubmit: false  // 禁用防重复提交
+// vite.config.js
+server: {
+  port: 80,
+  proxy: {
+    // /dev-api/* 代理到后端 8086
+    '/dev-api': {
+      target: 'http://localhost:8086',
+      changeOrigin: true
     },
-    method: 'post',
-    data: data
-  })
-}
-```
-
----
-
-### 6. 权限判断规范
-
-#### 角色权限判断
-
-```javascript
-import { checkRole } from '@/utils/permission'
-
-const isAdmin = computed(() => checkRole(['admin']))
-const isUser = computed(() => checkRole(['admin', 'common']))
-```
-
-#### 操作权限判断
-
-```javascript
-import { checkPermi } from '@/utils/permission'
-
-const canEdit = computed(() => checkPermi(['system:user:edit']))
-```
-
-#### 模板中使用
-
-```vue
-<!-- 角色控制 -->
-<el-button v-hasRole="['admin']">仅管理员可见</el-button>
-
-<!-- 权限控制 -->
-<el-button v-hasPermi="['system:user:add']">添加用户</el-button>
-```
-
----
-
-### 7. 样式规范 ⚠️
-
-#### 核心原则
-
-| 原则 | 说明 |
-|------|------|
-| 背景颜色 | 与 `front.vue` 整体背景保持一致，不额外加灰色背景 |
-| 按钮颜色 | 普通按钮白底细边框，删除按钮允许红色 |
-| 禁止 | 大面积灰色背景、高饱和蓝紫绿橙背景色 |
-
-#### 按钮规范
-
-```scss
-// 普通按钮
-.el-button {
-    border-radius: 8px;
-    font-weight: 500;
-    padding: 6px 14px;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    color: #6b7280;
-    &:hover {
-        transform: translateY(-2px);
-        border-color: #b3b3b3;
-        color: #4b5563;
+    // /ai/* 代理到后端（AI 接口）
+    '/ai': {
+      target: 'http://localhost:8086',
+      changeOrigin: true
+    },
+    // WebSocket 代理
+    '/ws': {
+      target: 'http://localhost:8086',
+      ws: true
     }
-}
-
-// 删除按钮（允许红色）
-.el-button--danger {
-    background: #fef2f2;
-    border-color: #e5d0d0;
-    color: #b45353;
-}
-```
-
-#### 卡片规范
-
-```scss
-.el-card {
-    border-radius: 16px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    background: #fff;
-    &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    }
-}
-```
-
-#### 输入框规范
-
-```scss
-.el-input__wrapper {
-    border-radius: 8px;
-    box-shadow: 0 0 0 1px #e5e7eb;
-    &:hover { box-shadow: 0 0 0 1px #d1d5db; }
-    &.is-focus { box-shadow: 0 0 0 1px #b3b3b3; }
-}
-```
-
-#### 颜色参考
-
-```
-标题文字:  #1f2937
-正文文字:  #6b7280
-浅色文字:  #9ca3af
-边框颜色:  #e5e7eb
-分割线:    #f3f4f6
-```
-
-#### 样式生效优先级
-
-1. **优先使用类名覆盖**
-2. **修改 Element Plus 内部元素时使用 `:deep()` 穿透**
-3. **使用不带 `scoped` 的 `<style lang="scss">` 块**
-
----
-
-### 8. 页面布局一致性规范 ⚠️
-
-#### 同一模块布局必须统一
-
-**英语学习模块**（`english/`）：
-- `home/index.vue`
-- `listening/index.vue`
-- `ocr/index.vue`
-- `vocabulary/index.vue`
-- `vocabulary/detail.vue`
-- `reading/index.vue`
-
-**知识库模块**（`knowledge/`）：
-- `home.vue`
-- `list.vue`
-- `upload.vue`
-- `qa.vue`
-- `docs.vue`
-
-**我的题目模块**（`myQuestion/`）：
-- `myBank/index.vue`
-- `myFavoriteBank/index.vue`
-- `myFavoriteQuestion/index.vue`
-- `myMistakes/index.vue`
-- `myMarked/index.vue`
-
-#### 统一做法
-
-1. 选定一个页面作为**基准页面**（如 `knowledge/list.vue`）
-2. 其他页面**复制基准页面的标题样式、卡片样式、间距、圆角**
-3. 最终效果：同一模块下切换子路由，视觉上毫无违和感
-
----
-
-### 9. 模块导航防重复跳转
-
-`front.vue` 中的模块导航使用自定义点击函数，避免重复跳转：
-
-```javascript
-const goToModule = (moduleKey, defaultPath) => {
-    if (isModuleActive(moduleKey)) return  // 已在模块内，不重复跳转
-    const lastVisited = cacheStore.getLastVisited(moduleKey, defaultPath)
-    router.push(`/front/${moduleKey}/${lastVisited}`)
+  }
 }
 ```
 
 ---
 
-### 10. remark 字段规范 ⚠️
+## 访问地址
 
-所有系统通知（`sys_notice` 表）的 `remark` 字段存储 JSON，统一包含以下 key：
-
-| key | 类型 | 说明 |
-|-----|------|------|
-| `type` | string | 通知类型：`comment`（评论笔记）、`reply`（回复评论）、`mention`（@通知） |
-| `fromUserId` | long | 触发通知的用户 ID（谁发的评论/@） |
-| `toUserId` | long | 接收通知的用户 ID（谁被通知） |
-| `noteId` | long | 关联笔记 ID |
-| `commentId` | long | 关联评论 ID |
-
-#### 示例
-
-```json
-// 评论笔记通知
-{"type":"comment","fromUserId":1,"toUserId":2,"noteId":1,"commentId":1}
-
-// 回复评论通知
-{"type":"reply","fromUserId":3,"toUserId":1,"noteId":1,"commentId":2}
-
-// @mention 通知
-{"type":"mention","fromUserId":1,"toUserId":4,"noteId":1,"commentId":3}
-```
-
-#### 兼容旧数据
-
-- 管理员公告的 `remark` 为 `null` 或空字符串
-- 旧通知（无 `type` 字段）默认显示在系统通知页
-
----
-
-### 11. 前台普通用户 API 权限规范
-
-前台页面（`/front/*`）调用的接口需使用 `@ss.hasRole('common')`，**禁止使用 `system:xxx:list` 等后台权限注解**。
-
-| 接口 | URL | 权限注解 | 用途 |
-|------|-----|----------|------|
-| `listUserFront` | `/system/user/frontList` | `@ss.hasRole('common')` | @ 功能用户搜索 |
-| `listTopNotice` | `/system/notice/list` | - | 系统通知列表 |
-| `getConversations` | `/system/chat/conversations` | `@ss.hasRole('common')` | 获取会话列表 |
-| `getChatHistory` | `/system/chat/history/{userId}` | `@ss.hasRole('common')` | 获取聊天记录 |
-| `sendMessage` | `/system/chat/send` | `@ss.hasRole('common')` | 发送消息 |
-| `markRead` | `/system/chat/markRead/{userId}` | `@ss.hasRole('common')` | 标记消息已读 |
-| `deleteMessage` | `/system/chat/message/{id}` | `@ss.hasRole('common')` | 删除消息 |
-| `deleteConversation` | `/system/chat/conversation/{userId}` | `@ss.hasRole('common')` | 删除会话 |
-| `getUnreadCount` | `/system/chat/unreadCount` | `@ss.hasRole('common')` | 获取未读消息数 |
-| `searchUsers` | `/system/chat/users` | `@ss.hasRole('common')` | 搜索用户（发起私信） |
-
-**原则**：
-1. 前台接口不走后台 RBAC 权限（`system:xxx:xxx`）
-2. 前台接口只检查角色（`common` / `admin`）
-3. 新增前台接口时，Controller 方法上使用 `@PreAuthorize("@ss.hasRole('common')")`
-
----
-
-## 常见问题与解决方案
-
-### 1. 深层路由缓存失效
-
-**问题**：连续点击导航导致路由跳回模块根路径，子页面内容消失。
-
-**原因**：`router-link` 每次点击都导航到根路径。
-
-**解决**：顶部导航改为自定义点击，已在模块内时直接忽略。
-
-### 2. 评论功能数据不显示
-
-**问题**：接口正常返回，但页面空白。
-
-**排查**：检查 Network 响应，`res.rows` vs `res.data.list`。
-
-**解决**：评论列表使用 `res.data.list`，总数使用 `res.data.total`。
-
-### 3. 图片路径不显示
-
-**问题**：上传后图片不显示或显示空白。
-
-**排查**：检查存储的路径是否带前缀，组件会自动拼接 `VITE_APP_BASE_API`。
-
-### 4. 缓存页面数据不更新
-
-**问题**：详情页切换不同条目，内容不更新。
-
-**解决**：详情页必须同时使用 `onMounted` + `onActivated` + `watch route.params.id`。
-
----
-
-## 已修复的 Bug 记录
-
-| 日期 | 页面 | 问题 | 解决方案 |
-|------|------|------|----------|
-| 2026-04-28 | list.vue | 评论列表取值 `res.data?.records` | 改为 `res.rows` |
-| 2026-04-28 | detail.vue | 上下篇导航不更新内容 | 添加 `watch route.params.id` |
-| 2026-04-28 | editor.vue | 编辑模式切换笔记不更新 | 添加 query 检测 + `watch route.query.id` |
-| 2026-05-02 | QuestionBuilder.vue | AI 生成题目时 userId=0，导致使用配置文件的脱敏 key | 调用 AI 接口时传递 `userId: userStore.id` |
-
----
-
-## 技术栈详情
-
-### 前端核心依赖
-
-| 依赖 | 版本 | 用途 |
+| 页面 | 地址 | 说明 |
 |------|------|------|
-| vue | 3.4.0 | 核心框架 |
-| element-plus | 2.13.7 | UI 组件库 |
-| pinia | 2.1.7 | 状态管理 |
-| vue-router | 4.2.5 | 路由管理 |
-| axios | 0.27.2 | HTTP 客户端 |
-| vue-advanced-cropper | 2.8.9 | 图片裁剪 |
-| vuedraggable | 4.1.0 | 拖拽排序 |
-| echarts | 5.4.3 | 图表 |
-| md-editor-v3 | 4.0.0 | Markdown 编辑器 |
-
-### 后端核心依赖
-
-| 依赖 | 版本 | 用途 |
-|------|------|------|
-| spring-boot | 3.5.11 | 核心框架 |
-| mybatis-spring-boot | 3.0.5 | ORM 框架 |
-| pagehelper | 2.1.1 | 分页插件 |
-| spring-ai | 1.0.0-M5 | AI 集成 |
-| druid | 1.2.28 | 数据库连接池 |
-| fastjson | 2.0.61 | JSON 处理 |
+| 前台首页 | http://localhost | 学习平台主页 |
+| 登录页面 | http://localhost/login | 用户登录 |
+| 注册页面 | http://localhost/register | 用户注册 |
+| 后台管理 | http://localhost/#/login | 系统后台 |
 
 ---
 
-## 私信聊天功能
+## 特色亮点
 
-### 功能概述
+### 前后台一体
 
-私信聊天模块提供用户间的实时私信功能，采用 Redis 缓存 + MySQL 持久化的混合存储架构。
+- 前台和后台共用同一前端端口（80）
+- 通过路由区分：`/front/*` 为前台，`/index/*` 为后台
+- 共用登录认证体系
 
-### 架构设计
+### AI 深度集成
 
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   前端      │────▶│   Redis     │────▶│   MySQL     │
-│  (Vue3)     │     │  (缓存)      │     │  (持久化)    │
-└─────────────┘     └─────────────┘     └─────────────┘
-     │                    │                    │
-     │                    │ 定时同步           │ 启动时加载
-     │                    │ 关闭时同步         │ 热点数据
-     └────────────────────┴────────────────────┘
-```
+- 全局 AI 悬浮助手：随时随地提问
+- 多 AI 提供商切换：智谱 AI / DeepSeek
+- RAG 知识库问答：基于文档的精准回答
+- AI 辅助出题：自动生成高质量题目
 
-### Redis 缓存策略
+### 组件化开发
 
-| Key 模式 | 类型 | 说明 | 过期时间 |
-|---------|------|------|----------|
-| `chat:messages:{uid1}:{uid2}:` | Hash | 聊天消息缓存 | 30天 |
-| `chat:conversations:{userId}` | List | 会话列表缓存 | 30天 |
-| `chat:pending:{userId}` | List | 待持久化消息队列 | 30天 |
-| `chat:unread:{userId}` | String | 未读消息数 | 实时更新 |
+- 丰富的可复用组件库
+- 统一的设计语言和样式规范
+- 组件 props 驱动，行为可控
 
-### 数据持久化策略
+### 页面缓存优化
 
-1. **定时同步**：每 5 分钟自动同步待持久化消息
-2. **关闭同步**：系统关闭时自动触发 `@PreDestroy` 同步所有待持久化消息
-3. **实时持久化**：新消息先缓存，异步批量写入数据库
+- 基于 keep-alive 的页面缓存
+- 支持页面状态保持
+- 三个钩子标准写法：onMounted + onActivated + watch
 
-### 数据库表结构
+### 权限精细控制
 
-```sql
--- chat_message 表
-CREATE TABLE `chat_message` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `sender_id` BIGINT NOT NULL COMMENT '发送者ID',
-  `sender_name` VARCHAR(100) NOT NULL,
-  `sender_nickname` VARCHAR(100) NOT NULL,
-  `sender_avatar` VARCHAR(255),
-  `receiver_id` BIGINT NOT NULL COMMENT '接收者ID',
-  `receiver_name` VARCHAR(100) NOT NULL,
-  `receiver_nickname` VARCHAR(100) NOT NULL,
-  `receiver_avatar` VARCHAR(255),
-  `content` TEXT NOT NULL COMMENT '消息内容',
-  `is_read` TINYINT NOT NULL DEFAULT 0 COMMENT '是否已读',
-  `is_deleted` TINYINT NOT NULL DEFAULT 0 COMMENT '是否删除',
-  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_sender_id` (`sender_id`),
-  KEY `idx_receiver_id` (`receiver_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
+- 基于 RBAC 的权限模型
+- 角色权限：`admin` / `common`
+- 前后台权限隔离
 
-### 前端页面结构
+---
 
-```
-src/views/front/messages/
-├── index.vue          # 消息中心布局（侧边栏 + 红点）
-├── notifications.vue  # 系统通知页面
-├── mentions.vue       # @通知页面
-└── chats.vue          # 私信聊天页面（WeChat 布局）
+## 致谢
 
-聊天页面布局：
-┌────────────────┬────────────────────────────────┐
-│  左侧会话列表   │        右侧聊天窗口              │
-│  ┌──────────┐  │  ┌────────────────────────┐   │
-│  │ 用户头像  │  │  │  聊天对象信息            │   │
-│  │ 昵称      │  │  ├────────────────────────┤   │
-│  │ 最新消息  │  │  │                        │   │
-│  │ 未读红点  │  │  │     消息展示区域         │   │
-│  └──────────┘  │  │                        │   │
-│                │  ├────────────────────────┤   │
-│  [+ 新建会话]  │  │     输入框区域           │   │
-│                │  └────────────────────────┘   │
-└────────────────┴────────────────────────────────┘
-```
+本项目前端基于 **若依前后端分离框架 Vue 3 版本** 二次开发，感谢若依框架提供的前端架构和组件规范。
 
-### 功能特性
-
-- [x] 会话列表展示（左侧重构消息预览+时间+未读红点）
-- [x] 聊天记录分页加载（每次加载20条，支持上拉加载更多）
-- [x] 发送文本消息
-- [x] 消息气泡样式（自己发送蓝色，对方发送白色）
-- [x] 标记消息已读
-- [x] 删除单条消息
-- [x] 删除整个会话
-- [x] 搜索用户发起新会话
-- [x] 消息通知红点（消息中心侧边栏）
-- [x] Redis 缓存加速读取
-- [x] 关闭时自动持久化到 MySQL
-- [ ] 图片发送功能（预留 UI）
-- [ ] 实时 WebSocket 推送（待实现）
-
-### 相关文件
-
-**后端：**
-- `system/domain/ChatMessage.java` - 消息实体
-- `system/mapper/ChatMessageMapper.java` - Mapper 接口
-- `system/mapper/ChatMessageMapper.xml` - Mapper XML
-- `system/service/IChatMessageService.java` - 服务接口
-- `system/service/impl/ChatMessageServiceImpl.java` - 服务实现（Redis 缓存）
-- `system/service/ChatSyncService.java` - 持久化同步服务
-- `framework/manager/ChatShutdownManager.java` - 关闭同步管理
-- `web/controller/system/SysChatController.java` - Controller
-
-**前端：**
-- `api/system/chat.js` - API 接口
-- `views/front/messages/chats.vue` - 聊天页面组件
+> 若依官网：https://ruoyi.vip
+>
+> 若依文档：http://doc.ruoyi.vip
 
 ---
 
 ## 许可证
 
-MIT License
-
----
-
-## 贡献指南
-
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 创建 Pull Request
-
-⚠️ 安全提醒
----
-API Key 存储说明：
-1. 用户自定义的 API Key 以明文形式存储在数据库的 `sys_ai_config` 表中
-2. 请确保数据库访问权限的安全，不要将数据库文件或备份随意分享给他人
-3. 建议在生产环境中自行对敏感字段进行加密处理
-4. 部署服务器时，请确保服务器安全，避免 SQL 注入等安全风险
+本项目采用 MIT 许可证开源。
