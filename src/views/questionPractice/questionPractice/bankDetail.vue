@@ -43,8 +43,11 @@ const goBack = () => {
   const source = cacheStore.getCachedForm('bankDetailSource')
   cacheStore.clearCachedForm('bankDetailSource')
   cacheStore.setLastVisited('questionPractice', '')
+
   if (source === 'myLearning') {
     router.back()
+  } else if (source === 'questionPractice') {
+    router.replace('/front/questionPractice')
   } else {
     router.replace('/front/questionPractice')
   }
@@ -59,11 +62,19 @@ watch(() => route.params.bankId, (newId) => {
 onMounted(() => {
   if (route.query.from === 'myLearning') {
     cacheStore.setCachedForm('bankDetailSource', 'myLearning')
+  } else if (route.query.from === 'questionPractice') {
+    cacheStore.setCachedForm('bankDetailSource', 'questionPractice')
   }
   fetchBank()
 })
 
 onActivated(() => {
+  if (route.query.from === 'myLearning') {
+    cacheStore.setCachedForm('bankDetailSource', 'myLearning')
+  } else if (route.query.from === 'questionPractice') {
+    cacheStore.setCachedForm('bankDetailSource', 'questionPractice')
+  }
+
   const bankId = route.params.bankId
   if (bankId && (!bank.value || bank.value.id !== Number(bankId))) {
     fetchBank()

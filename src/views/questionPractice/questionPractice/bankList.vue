@@ -96,7 +96,7 @@ const handleCardClickConfirm = (bank) => {
 }
 
 const viewBankDetail = (bank) => {
-  router.push(`/front/questionPractice/${bank.id}`)
+  router.push(`/front/questionPractice/${bank.id}?from=questionPractice`)
 }
 
 const handleCollectSuccess = (targetId, type) => {
