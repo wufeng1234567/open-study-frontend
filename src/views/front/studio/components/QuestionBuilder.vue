@@ -49,7 +49,7 @@
             @click="addQuestionFromBackend(item)">
             <div class="import-item-header">
               <el-tag size="small" type="info">{{ getTypeName(item.questionType) }}</el-tag>
-              <span class="import-item-title">{{ item.questionText || '无题干' }}</span>
+              <span class="import-item-title">{{ getPlainText(item.questionText) || '无题干' }}</span>
             </div>
             <div class="import-item-footer">
               <el-button type="primary" text size="small">添加</el-button>
@@ -97,7 +97,7 @@
               </el-icon>
             </div>
             <div class="question-preview">
-              {{ element.title || '未命名题目' }}
+              {{ getPlainText(element.title) || '未命名题目' }}
             </div>
             <div class="question-actions">
               <el-button type="danger" text size="small" @click.stop="removeQuestion(element.id)">
@@ -144,7 +144,9 @@
           </el-form-item>
 
           <el-form-item label="题干">
-            <el-input v-model="currentQuestion.title" type="textarea" :rows="3" placeholder="请输入题目内容" />
+            <div class="question-tiptap-wrapper">
+              <TiptapEditor v-model="currentQuestion.title" placeholder="请输入题目内容，支持图片上传" @preview-image="openImageViewer" />
+            </div>
           </el-form-item>
 
           <!-- 普通题型的选项编辑 -->
@@ -214,8 +216,9 @@
           <!-- 组合题：材料 + 子题管理 -->
           <template v-if="currentQuestion.type === 'composite'">
             <el-form-item label="材料/文章内容">
-              <el-input v-model="currentQuestion.content" type="textarea" :rows="6"
-                placeholder="请输入文章或材料内容。可使用 ___1___、___2___ 等占位符" />
+              <div class="question-tiptap-wrapper composite-tiptap">
+                <TiptapEditor v-model="currentQuestion.content" placeholder="请输入文章或材料内容。可使用 ___1___、___2___ 等占位符" @preview-image="openImageViewer" />
+              </div>
               <div class="json-hint">提示：占位符 ___数字___ 会在练习时自动转为输入框</div>
             </el-form-item>
 
@@ -255,7 +258,9 @@
                         </el-button>
                       </div>
                       <div class="sub-body">
-                        <el-input v-model="sub.question" type="textarea" :rows="2" placeholder="子题题干" size="small" />
+                        <div class="sub-tiptap-wrapper">
+                          <TiptapEditor v-model="sub.question" placeholder="子题题干，支持图片上传" @preview-image="openImageViewer" />
+                        </div>
                         <div v-if="['single', 'multiple'].includes(sub.type)" class="sub-options">
                           <div class="sub-options-label">选项（JSON数组）：</div>
                           <el-input v-model="sub.optionsJson" type="textarea" :rows="2"
@@ -684,6 +689,8 @@
 
     <QuestionFullEditor v-model="fullEditorVisible" :question-data="currentQuestion" @save="handleFullEditorSave" />
 
+    <ImageViewer v-model:visible="viewerVisible" :src="viewerSrc" />
+
     <ScrollButton :bottom="20" :right="20" />
   </div>
 </template>
@@ -701,6 +708,9 @@ import { listAiConfig, getCurrentModel } from '@/api/system/aiConfig'
 import aiModelManager from '@/components/AiModelManager/index.vue'
 import QuestionFullEditor from './QuestionFullEditor.vue'
 import ScrollButton from '@/components/ScrollButton/ScrollButton.vue'
+import TiptapEditor from '@/components/TiptapEditor/index.vue'
+import ImageViewer from '@/components/PracticeComponent/ImageViewer.vue'
+import { textToHtml, getPlainText } from '@/utils/questionUtils'
 import useUserStore from '@/store/modules/user'
 
 const userStore = useUserStore()
@@ -783,6 +793,14 @@ const showOptionsJsonDialog = ref(false)
 // 全屏编辑弹窗
 const fullEditorVisible = ref(false)
 
+// 图片预览
+const viewerVisible = ref(false)
+const viewerSrc = ref('')
+
+const openImageViewer = (src) => {
+  viewerSrc.value = src
+  viewerVisible.value = true
+}
 
 // 当前题库ID（从父组件传入或路由获取）
 // const currentBankId = ref(null)
@@ -998,7 +1016,7 @@ const truncateText = (text, maxLength) => {
 const allFilteredQuestions = computed(() => {
   const keyword = searchKeyword.value.toLowerCase()
   return questions.value.filter(
-    (q) => q?.title?.toLowerCase().includes(keyword) || getTypeName(q?.type).includes(keyword)
+    (q) => getPlainText(q?.title).toLowerCase().includes(keyword) || getTypeName(q?.type).includes(keyword)
   )
 })
 
@@ -1156,8 +1174,8 @@ const addQuestionFromBackend = (item) => {
     id: newId,
     backendId: item.id,
     type: mapBackendType(item.questionType),
-    title: item.questionText || '',
-    content: item.content || '',
+    title: textToHtml(item.questionText || ''),
+    content: textToHtml(item.content || ''),
     analysis: item.analysis || '',
     score: item.score || 5
   }
@@ -1172,7 +1190,7 @@ const addQuestionFromBackend = (item) => {
     newQuestion.subQuestions = (item.questionSubList || []).map(sub => ({
       id: sub.id,
       type: mapBackendType(sub.questionType),
-      question: sub.questionText || '',
+      question: textToHtml(sub.questionText || ''),
       optionsJson: sub.options,
       options: parseOptions(sub.options),
       answer: parseAnswer(sub.answer, sub.questionType),
@@ -1635,7 +1653,7 @@ const convertAiQuestionToInternal = (aiQuestion, questionType) => {
   const base = {
     id: newId,
     type: questionType,
-    title: aiQuestion.question || aiQuestion.title || '',
+    title: textToHtml(aiQuestion.question || aiQuestion.title || ''),
     analysis: aiQuestion.analysis || '',
     score: 5
   }
@@ -1680,8 +1698,8 @@ const convertCompositeFromAi = (aiData) => {
   const composite = {
     id: newId,
     type: 'composite',
-    title: aiData.title || '阅读理解',
-    content: aiData.passage || '',
+    title: textToHtml(aiData.title || '阅读理解'),
+    content: textToHtml(aiData.passage || ''),
     analysis: '',
     score: 10,
     subQuestions: []
@@ -1692,7 +1710,7 @@ const convertCompositeFromAi = (aiData) => {
     const sub = {
       id: Date.now() + Math.random() + index,
       type: subType,
-      question: q.question || '',
+      question: textToHtml(q.question || ''),
       score: q.score || 2,
       analysis: q.analysis || '',
       sortOrder: index
@@ -1974,7 +1992,7 @@ const processParsedData = (isComposite, parsed) => {
       composite = { id: Date.now() + Math.random(), type: 'composite', title: '组合题（请手动填写材料）', content: '', analysis: '', score: 10, subQuestions: [] }
       parsed.forEach((q, idx) => {
         const subType = mapAiTypeToInternal(q.type || 'single')
-        const sub = { id: Date.now() + Math.random() + idx, type: subType, question: q.question || '', score: 2, analysis: q.analysis || '', sortOrder: idx }
+        const sub = { id: Date.now() + Math.random() + idx, type: subType, question: textToHtml(q.question || ''), score: 2, analysis: q.analysis || '', sortOrder: idx }
         if (subType === 'single' || subType === 'multiple') {
           let opts = q.options || []
           if (typeof opts === 'string') try { opts = JSON.parse(opts) } catch { opts = [] }
@@ -2480,6 +2498,45 @@ defineExpose({ questions, openAiDialog })
       text-align: center;
       color: #bbb;
       font-size: 14px;
+    }
+
+    .question-tiptap-wrapper {
+      width: 100%;
+      :deep(.tiptap-editor) {
+        min-height: 120px;
+        border-radius: 8px;
+      }
+      :deep(.editor-content) {
+        padding: 10px 14px;
+        min-height: 80px;
+      }
+    }
+
+    .composite-tiptap {
+      :deep(.tiptap-editor) {
+        min-height: 180px;
+      }
+    }
+
+    .sub-tiptap-wrapper {
+      margin-bottom: 8px;
+      :deep(.tiptap-editor) {
+        min-height: 80px;
+        border-radius: 8px;
+        border-color: #e5e7eb;
+      }
+      :deep(.editor-toolbar) {
+        padding: 4px 6px;
+        .toolbar-btn {
+          width: 26px;
+          height: 26px;
+        }
+      }
+      :deep(.editor-content) {
+        padding: 8px 12px;
+        min-height: 50px;
+        font-size: 14px;
+      }
     }
   }
 

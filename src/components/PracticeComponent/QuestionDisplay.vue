@@ -1,6 +1,6 @@
 <!-- src/components/PracticeComponent/QuestionDisplay.vue -->
 <template>
-  <div class="question-area">
+  <div class="question-area" @click="handleContentClick">
 
     <!-- 题型提示区域 -->
     <div class="question-type-hint" :class="getQuestionTypeClass(currentQuestion?.type)">
@@ -57,8 +57,8 @@
       <template v-if="currentQuestion">
         <!-- 移除这里的 question-type span，移动到上面的提示区域 -->
         <span class="question-title"
-          v-if="currentQuestion.type !== 'cloze' && currentQuestion.type !== 'readingComprehension'">{{
-            currentQuestion.question }}</span>
+          v-if="currentQuestion.type !== 'cloze' && currentQuestion.type !== 'readingComprehension'"
+          v-html="currentQuestion.question"></span>
       </template>
 
       <!-- 如果还没加载出来，显示"加载中" -->
@@ -210,12 +210,13 @@ const props = defineProps({
   }
 })
 
-defineEmits([
+const emit = defineEmits([
   'select-option',
   'update-answer',
   'select-sub-option',
   'update-sub-fill-blank-answer',
-  'update-sub-essay-answer'
+  'update-sub-essay-answer',
+  'preview-image'
 ])
 
 // 获取题型文本
@@ -364,6 +365,13 @@ function showUserAnswer() {
 
   return false
 }
+
+function handleContentClick(e) {
+  const img = e.target.closest('img')
+  if (img && img.src) {
+    emit('preview-image', img.src)
+  }
+}
 </script>
 
 <style scoped>
@@ -510,6 +518,21 @@ function showUserAnswer() {
   line-height: 1.6;
   margin-top: 8px;
   display: block;
+
+  :deep(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 8px 0;
+  }
+
+  :deep(p) {
+    margin: 0 0 8px;
+  }
+
+  :deep(p:last-child) {
+    margin-bottom: 0;
+  }
 }
 
 /* 选项区域样式 */
@@ -565,6 +588,13 @@ function showUserAnswer() {
   background: #f8f9fa;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
+
+  :deep(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 8px 0;
+  }
 }
 
 .question-analysis {

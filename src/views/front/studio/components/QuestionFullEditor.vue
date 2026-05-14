@@ -15,7 +15,9 @@
         </el-form-item>
 
         <el-form-item label="题干">
-          <el-input v-model="question.title" type="textarea" :rows="2" placeholder="请输入题目内容" />
+          <div class="full-tiptap-wrapper">
+            <TiptapEditor v-model="question.title" placeholder="请输入题目内容，支持图片上传" @preview-image="openImageViewer" />
+          </div>
         </el-form-item>
 
         <template v-if="['single', 'multiple', 'judge'].includes(question.type)">
@@ -65,8 +67,9 @@
 
         <template v-if="question.type === 'composite'">
           <el-form-item label="材料/文章内容">
-            <el-input v-model="question.content" type="textarea" :rows="4"
-              placeholder="请输入文章或材料内容。可使用 ___1___、___2___ 等占位符" />
+            <div class="full-tiptap-wrapper composite-tiptap">
+              <TiptapEditor v-model="question.content" placeholder="请输入文章或材料内容。可使用 ___1___、___2___ 等占位符" @preview-image="openImageViewer" />
+            </div>
           </el-form-item>
 
           <el-form-item label="子题管理">
@@ -106,7 +109,9 @@
                   <div class="card-body">
                     <div class="field-item field-full">
                       <label class="field-label">题干</label>
-                      <el-input v-model="sub.question" type="textarea" :rows="1" placeholder="请输入子题题干" size="small" />
+                      <div class="sub-tiptap-wrapper">
+                        <TiptapEditor v-model="sub.question" placeholder="子题题干，支持图片上传" @preview-image="openImageViewer" />
+                      </div>
                     </div>
                     <template v-if="['single', 'multiple'].includes(sub.type)">
                       <div class="field-item">
@@ -183,12 +188,16 @@
       </div>
     </template>
   </el-dialog>
+
+  <ImageViewer v-model:visible="viewerVisible" :src="viewerSrc" />
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
 import { Delete, Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import TiptapEditor from '@/components/TiptapEditor/index.vue'
+import ImageViewer from '@/components/PracticeComponent/ImageViewer.vue'
 
 const props = defineProps({
   modelValue: {
@@ -206,6 +215,14 @@ const emit = defineEmits(['update:modelValue', 'save'])
 const visible = ref(props.modelValue)
 const question = ref({})
 const selectedSubType = ref('single')
+
+const viewerVisible = ref(false)
+const viewerSrc = ref('')
+
+const openImageViewer = (src) => {
+  viewerSrc.value = src
+  viewerVisible.value = true
+}
 
 watch(() => props.modelValue, (val) => {
   visible.value = val
@@ -472,6 +489,45 @@ const onTypeChange = () => {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
+  }
+
+  .full-tiptap-wrapper {
+    width: 100%;
+    :deep(.tiptap-editor) {
+      min-height: 120px;
+      border-radius: 8px;
+    }
+    :deep(.editor-content) {
+      padding: 10px 14px;
+      min-height: 80px;
+    }
+  }
+
+  .composite-tiptap {
+    :deep(.tiptap-editor) {
+      min-height: 180px;
+    }
+  }
+
+  .sub-tiptap-wrapper {
+    margin-bottom: 8px;
+    :deep(.tiptap-editor) {
+      min-height: 80px;
+      border-radius: 8px;
+      border-color: #e5e7eb;
+    }
+    :deep(.editor-toolbar) {
+      padding: 4px 6px;
+      .toolbar-btn {
+        width: 26px;
+        height: 26px;
+      }
+    }
+    :deep(.editor-content) {
+      padding: 8px 12px;
+      min-height: 50px;
+      font-size: 14px;
+    }
   }
 }
 </style>

@@ -143,7 +143,7 @@
         </button>
       </div>
     </div>
-    <editor-content :editor="editor" class="editor-content" />
+    <editor-content :editor="editor" class="editor-content" @click="handleEditorClick" />
     <input type="file" ref="fileInputRef" accept="image/*" style="display:none" @change="handleFileSelected" />
   </div>
 </template>
@@ -200,9 +200,18 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'imageUpload'])
+const emit = defineEmits(['update:modelValue', 'imageUpload', 'preview-image'])
 
 const fileInputRef = ref(null)
+
+const handleEditorClick = (e) => {
+  const img = e.target.closest('img')
+  if (img && img.src) {
+    e.preventDefault()
+    e.stopPropagation()
+    emit('preview-image', img.src)
+  }
+}
 
 const lowlight = createLowlight(all)
 

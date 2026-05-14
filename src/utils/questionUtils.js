@@ -1,3 +1,25 @@
+export function textToHtml(text) {
+  if (!text) return ''
+  if (/<[a-z][\s\S]*>/i.test(text)) return text
+  return '<p>' + text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n/g, '</p><p>') + '</p>'
+}
+
+export function getPlainText(html) {
+  if (!html) return ''
+  if (typeof html !== 'string') return String(html)
+  if (!/<[a-z][\s\S]*>/i.test(html)) return html
+  if (typeof document !== 'undefined') {
+    const div = document.createElement('div')
+    div.innerHTML = html
+    return (div.textContent || div.innerText || '').trim()
+  }
+  return html.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').trim()
+}
+
 // 通用选项解析函数，安全处理各种格式
 export function parseOptions(rawOptions, type = 'single') {
   // 判断题固定选项

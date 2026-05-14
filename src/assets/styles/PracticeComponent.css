@@ -102,6 +102,28 @@
   line-height: 1.6;
 }
 
+.question-title img,
+.main-content-box img,
+.sub-question-title img,
+.analysis-content img,
+.question-analysis img,
+.reading-analysis img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 8px 0;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  display: block;
+}
+
+.question-title img:hover,
+.main-content-box img:hover,
+.sub-question-title img:hover,
+.analysis-content img:hover {
+  opacity: 0.85;
+}
+
 .options {
   margin: 20px 0;
 }

@@ -31,7 +31,8 @@
               @update-answer="(value) => handleOverviewUpdateAnswer(index, value)"
               @select-sub-option="(subIndex, optIdx) => handleOverviewSelectSubOption(index, subIndex, optIdx)"
               @update-sub-fill-blank-answer="(subIndex, value) => handleOverviewUpdateSubFillBlank(index, subIndex, value)"
-              @update-sub-essay-answer="(subIndex, value) => handleOverviewUpdateSubEssay(index, subIndex, value)" />
+              @update-sub-essay-answer="(subIndex, value) => handleOverviewUpdateSubEssay(index, subIndex, value)"
+              @preview-image="openImageViewer" />
           </div>
 
           <div v-if="moduleType === 'mock' && (isExamMode || isPracticeMode) && !showExamResult"
@@ -82,7 +83,8 @@
           :sub-fill-blank-answers="subFillBlankAnswers" :sub-essay-answers="subEssayAnswers" :answers="answers"
           :show-analysis-immediately="showAnalysisImmediately" @select-option="handleSelectOption"
           @update-answer="value => selectedAnswer = value" @select-sub-option="selectSubOption"
-          @update-sub-fill-blank-answer="updateSubFillBlankAnswer" @update-sub-essay-answer="updateSubEssayAnswer" />
+          @update-sub-fill-blank-answer="updateSubFillBlankAnswer" @update-sub-essay-answer="updateSubEssayAnswer"
+          @preview-image="openImageViewer" />
 
         <AnswerCard :questions="questions" :current-question-index="currentQuestionIndex" :stats="{
           correctCount,
@@ -119,6 +121,8 @@
 
     <!-- 滚动按钮 -->
     <ScrollButton :bottom="20" :right="20" />
+
+    <ImageViewer v-model:visible="viewerVisible" :src="viewerSrc" />
   </div>
 </template>
 
@@ -134,6 +138,7 @@ import PracticeSettings from './PracticeSettings.vue'
 import MarkedButton from '@/components/MarkedButton/MarkedButton.vue'
 import FavoriteButton from '@/components/FavoriteButton/FavoriteButton.vue'
 import ScrollButton from '@/components/ScrollButton/ScrollButton.vue'
+import ImageViewer from './ImageViewer.vue'
 import { useQuestionPractice } from '@/composables/useQuestionPractice'
 import usePracticeSettingsStore from '@/store/modules/practiceSettings'
 import AiAnalysisDialog from '@/components/AiAnalysisDialog/index.vue'
@@ -167,6 +172,8 @@ const showSettings = ref(false)
 const showExamResult = ref(false)
 const totalScore = ref(0)
 const showAnalysisDialog = ref(false)
+const viewerVisible = ref(false)
+const viewerSrc = ref('')
 const hasSubmittedCurrentBatch = ref(false)
 const isFirstLoaded = ref(false)
 
@@ -668,6 +675,11 @@ watch(overviewMode, (val) => {
     }
   }
 })
+
+function openImageViewer(src) {
+  viewerSrc.value = src
+  viewerVisible.value = true
+}
 
 function openAiAnalysis() {
   const questionId = currentQuestion.value?.id

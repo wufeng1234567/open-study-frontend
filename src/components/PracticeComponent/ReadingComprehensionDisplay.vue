@@ -27,7 +27,7 @@
           <span class="sub-truefalse-hint" v-if="q.type === 'truefalse'">（判断对错）</span>
         </div>
 
-        <div class="sub-question-title">{{ idx + 1 }}. {{ q.question }}</div>
+        <div class="sub-question-title"><span class="sub-question-idx">{{ idx + 1 }}.</span> <span v-html="q.question"></span></div>
 
         <!-- 单选题、多选题 -->
         <div v-if="['single', 'multiple'].includes(q.type) && q.options && q.options.length > 0" class="sub-options">
@@ -402,6 +402,25 @@ function formatAnswer(answer, type) {
   font-size: 14px;
   color: #1f2937;
   line-height: 1.5;
+
+  .sub-question-idx {
+    font-weight: bold;
+  }
+
+  :deep(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 8px 0;
+  }
+
+  :deep(p) {
+    margin: 0 0 4px;
+  }
+
+  :deep(p:last-child) {
+    margin-bottom: 0;
+  }
 }
 
 /* 子题目选项样式 */
