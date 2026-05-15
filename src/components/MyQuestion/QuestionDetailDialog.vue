@@ -3,23 +3,25 @@
   <el-dialog :model-value="visible" :title="dialogTitle" width="85%" :fullscreen="isFullscreen"
     :close-on-click-modal="false" :close-on-press-escape="true" @close="$emit('close')" class="question-detail-dialog"
     custom-class="question-detail-dialog-custom">
+    <!-- 图片预览组件 -->
+    <ImageViewer v-model:visible="viewerVisible" :src="viewerSrc" />
+
     <!-- 题目显示区域 -->
     <div v-if="currentQuestionDetail" class="dialog-content">
-      <!-- 移除了题目信息概览 section -->
-
       <QuestionDisplay :current-question="currentQuestionDetail" :current-question-index="currentQuestionIndex"
         :total-questions="dialogQuestions.length" :selected-answer="selectedAnswer"
         :sub-fill-blank-answers="subFillBlankAnswers" :sub-essay-answers="subEssayAnswers" :answers="answers"
         @select-option="$emit('select-option', $event)" @update-answer="$emit('update-answer', $event)"
         @select-sub-option="$emit('select-sub-option', $event)"
         @update-sub-fill-blank-answer="$emit('update-sub-fill-blank-answer', $event)"
-        @update-sub-essay-answer="$emit('update-sub-essay-answer', $event)" />
+        @update-sub-essay-answer="$emit('update-sub-essay-answer', $event)"
+        @preview-image="openImageViewer" />
 
       <!-- 底部导航 -->
       <QuestionNavigation :show-prev="currentQuestionIndex > 0"
         :show-next="currentQuestionIndex < dialogQuestions.length - 1" :question-id="currentQuestionDetail?.id"
         @prev-question="$emit('prev-question')" @next-question="$emit('next-question')" @mark="$emit('mark')"
-        @add-note="$emit('add-note')" @report="$emit('report')" />
+        @add-note="$emit('add-note')" @report="$emit('report')" @ai-analyze="$emit('ai-analyze', currentQuestionDetail)" />
     </div>
     <div v-else class="loading-dialog">
       <el-skeleton :rows="10" animated />
@@ -44,6 +46,17 @@ import { computed, ref, watch } from 'vue'
 import { FullScreen, InfoFilled, Warning, StarFilled, Document, Notebook, Clock, Flag } from '@element-plus/icons-vue'
 import QuestionDisplay from '@/components/PracticeComponent/QuestionDisplay.vue'
 import QuestionNavigation from '@/components/PracticeComponent/QuestionNavigation.vue'
+import ImageViewer from '@/components/PracticeComponent/ImageViewer.vue'
+
+// 图片预览状态
+const viewerVisible = ref(false)
+const viewerSrc = ref('')
+
+// 打开图片预览
+const openImageViewer = (src) => {
+  viewerSrc.value = src
+  viewerVisible.value = true
+}
 
 const props = defineProps({
   visible: Boolean,
@@ -66,7 +79,7 @@ const emit = defineEmits([
   'close', 'toggle-fullscreen', 'prev-question', 'next-question',
   'select-option', 'update-answer', 'select-sub-option',
   'update-sub-fill-blank-answer', 'update-sub-essay-answer',
-  'mark', 'add-note', 'report'
+  'mark', 'add-note', 'report', 'ai-analyze'
 ])
 
 // 使用 ref 来跟踪当前题目类型
@@ -174,8 +187,6 @@ const formatTime = (time) => {
     gap: 20px;
   }
 
-  /* 移除了 .question-info-overview 相关样式 */
-
   .loading-dialog {
     padding: 20px;
   }
@@ -204,5 +215,21 @@ const formatTime = (time) => {
 .question-detail-dialog-custom .el-dialog__header {
   padding: 20px 24px 10px;
   border-bottom: 1px solid #e4e7ed;
+}
+
+/* 题目详情框图片尺寸限制 */
+.question-detail-dialog .dialog-content img {
+  max-width: 400px !important;
+  max-height: 300px !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.question-detail-dialog .dialog-content img:hover {
+  opacity: 0.85;
 }
 </style>

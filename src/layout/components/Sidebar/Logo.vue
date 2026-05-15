@@ -43,32 +43,38 @@ const sideTheme = computed(() => settingsStore.sideTheme);
 .sidebar-logo-container {
   position: relative;
   width: 100%;
-  height: 50px;
-  line-height: 50px;
-  background: #2b2f3a;
+  height: 60px;
+  line-height: 60px;
+  background: #ffffff;
   text-align: center;
   overflow: hidden;
+  border-bottom: 1px solid #e5e7eb;
 
   & .sidebar-logo-link {
     height: 100%;
     width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
 
     & .sidebar-logo {
       width: 32px;
       height: 32px;
       vertical-align: middle;
-      margin-right: 12px;
+      margin-right: 10px;
     }
 
     & .sidebar-title {
       display: inline-block;
       margin: 0;
-      color: #fff;
+      color: #1f2937;
       font-weight: 600;
-      line-height: 50px;
-      font-size: 14px;
+      line-height: 60px;
+      font-size: 15px;
       font-family: Avenir, Helvetica Neue, Arial, Helvetica, sans-serif;
       vertical-align: middle;
+      letter-spacing: -0.5px;
     }
   }
 

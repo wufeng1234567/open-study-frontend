@@ -95,6 +95,9 @@ function setLayout() {
   z-index: 9;
   width: calc(100% - #{$base-sidebar-width});
   transition: width 0.28s;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .hideSidebar .fixed-header {

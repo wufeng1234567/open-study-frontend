@@ -48,15 +48,19 @@ router.beforeEach((to, from, next) => {
       }
     } else if (whiteList.indexOf(to.path) !== -1) {
       next()
-    } else if (to.path.startsWith('/index/') && !userStore.roles.includes('admin')) {
-      next({ path: '/front/index' })
-      NProgress.done()
     } else {
       if (userStore.roles.length === 0) {
         isRelogin.show = true
 
         userStore.getInfo().then(() => {
           isRelogin.show = false
+
+          // 获取用户信息后，检查是否有权限访问后台页面
+          if (to.path.startsWith('/index/') && !userStore.roles.includes('admin')) {
+            next({ path: '/front/index' })
+            NProgress.done()
+            return
+          }
 
           permissionStore.generateRoutes().then(accessRoutes => {
             accessRoutes.forEach(route => {
@@ -77,6 +81,13 @@ router.beforeEach((to, from, next) => {
           NProgress.done()
         })
       } else {
+        // 已有用户信息，检查是否有权限访问后台页面
+        if (to.path.startsWith('/index/') && !userStore.roles.includes('admin')) {
+          next({ path: '/front/index' })
+          NProgress.done()
+          return
+        }
+
         if (permissionStore.addRoutes.length === 0) {
           permissionStore.generateRoutes().then(accessRoutes => {
             accessRoutes.forEach(route => {

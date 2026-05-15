@@ -18,16 +18,16 @@
             <div v-else class="empty-carousel">暂无轮播图</div>
         </div>
 
-        <!-- 活动介绍 -->
+        <!-- 平台介绍 -->
         <div class="activity-intro">
-            <h2>📚 openstudy正式上线！</h2>
-            <p>我们很高兴地宣布，全新「openstudy」已全面启用！本系统致力于为在校学生打造一个高效、专注、个性化的自主学习环境。</p>
+            <h2>📚 OpenStudy 开放学习平台</h2>
+            <p>基于 AI 驱动的智能学习平台，为学习者提供高效、便捷的一站式学习体验。</p>
             <ul>
-                <li>✅ 智能制定个性化学习计划</li>
-                <li>✅ 实时在线答疑与辅导支持</li>
-                <li>✅ 海量优质学习资源库（视频/题库/笔记）</li>
-                <li>✅ 学习进度自动追踪与周报反馈</li>
-                <li>✅ 自习室预约、专注计时、成就激励</li>
+                <li>✅ 海量题库智能刷题，错题本精准复习</li>
+                <li>✅ AI 解析与智能出题，高效掌握知识点</li>
+                <li>✅ Markdown 笔记分享，打造个人知识库</li>
+                <li>✅ 英语学习专区，OCR 识词与词汇管理</li>
+                <li>✅ 实用工具箱，图片处理与文档转换</li>
             </ul>
             <p style="margin-top: 16px; text-align: center; color: #409eff;">
                 🎉 快来体验吧，开启你的高效学习之旅！
@@ -37,21 +37,11 @@
 </template>
 
 <script setup name="FrontIndex">
-import { ref, onMounted, computed } from 'vue'
-// import { useRouter } from 'vue-router'
-import { Switch } from '@element-plus/icons-vue'
+import { ref, onMounted } from 'vue'
 import { listCarouselAll } from '@/api/carousel/carousel'
-import useUserStore from '@/store/modules/user'
-
-// const router = useRouter()
-const userStore = useUserStore()
 
 const carouselList = ref([])
 const loading = ref(true)
-
-const isAdmin = computed(() => {
-    return userStore.roles?.some(role => ['admin', 'common'].includes(role))
-})
 
 function fetchCarouselList() {
     loading.value = true

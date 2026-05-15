@@ -1,6 +1,12 @@
 ﻿﻿﻿﻿<!-- src/components/MyQuestion/MyQuestion.vue -->
 <template>
   <div class="app-container">
+    <!-- AI 解析弹框 -->
+    <AiAnalysisDialog v-if="showAiAnalysis" :question="currentAiQuestion.text" :question-id="currentAiQuestion.id"
+      :question-type="currentAiQuestion.type" :options="currentAiQuestion.options"
+      :correct-answer="currentAiQuestion.answer" :cached-content="currentAiQuestion.cachedContent"
+      @close="showAiAnalysis = false" @update-cache="updateAiCache" />
+
     <!-- 题目详情弹框 -->
     <QuestionDetailDialog v-model:visible="detailDialogVisible" :current-favorite-question="currentFavoriteQuestion"
       :current-question-detail="currentQuestionDetail" :current-question-index="currentQuestionIndex"
@@ -10,7 +16,7 @@
       @prev-question="prevQuestionInDialog" @next-question="nextQuestionInDialog" @select-option="selectOption"
       @update-answer="value => selectedAnswer = value" @select-sub-option="selectSubOption"
       @update-sub-fill-blank-answer="updateSubFillBlankAnswer" @update-sub-essay-answer="updateSubEssayAnswer"
-      @mark="markQuestion" @add-note="addNote" @report="reportQuestion" />
+      @mark="markQuestion" @add-note="addNote" @report="reportQuestion" @ai-analyze="openAiAnalysis" />
 
     <!-- 主页面 -->
     <div class="favorite-container">
@@ -82,6 +88,7 @@ import QuestionDetailDialog from './QuestionDetailDialog.vue'
 import QuestionHeader from './QuestionHeader.vue'
 import QuestionFilterSidebar from './QuestionFilterSidebar.vue'
 import QuestionCard from './QuestionCard.vue'
+import AiAnalysisDialog from '@/components/AiAnalysisDialog/index.vue'
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
@@ -192,6 +199,18 @@ const filterForm = reactive({
 })
 
 const hasAutoAppliedFilter = ref(false)
+
+// AI 解析相关状态
+const showAiAnalysis = ref(false)
+const aiAnalysisCache = ref(new Map())
+const currentAiQuestion = ref({
+  id: null,
+  text: '',
+  type: '',
+  options: '',
+  answer: '',
+  cachedContent: ''
+})
 
 const emit = defineEmits([
   'view-detail',
@@ -783,6 +802,56 @@ const addNote = () => {
 const reportQuestion = () => {
   proxy.$modal.msgInfo('举报功能开发中')
   emit('report')
+}
+
+// AI 解析功能
+const openAiAnalysis = (questionDetail) => {
+  if (!questionDetail) return
+
+  const questionId = questionDetail.id || currentQuestionDetail.value?.id
+  if (!questionId) return
+
+  // 获取题目信息
+  const question = questionDetail.questionText || currentQuestionDetail.value?.questionText || ''
+  const questionType = getQuestionTypeName(questionDetail.questionType || currentQuestionDetail.value?.questionType)
+  const options = questionDetail.options || currentQuestionDetail.value?.options || ''
+  const answer = questionDetail.answer || currentQuestionDetail.value?.answer || ''
+
+  // 检查缓存
+  let cachedContent = ''
+  if (aiAnalysisCache.value.has(questionId)) {
+    cachedContent = aiAnalysisCache.value.get(questionId)
+  }
+
+  // 设置当前题目信息
+  currentAiQuestion.value = {
+    id: questionId,
+    text: question,
+    type: questionType,
+    options: typeof options === 'string' ? options : JSON.stringify(options),
+    answer: answer,
+    cachedContent: cachedContent
+  }
+
+  showAiAnalysis.value = true
+}
+
+// 获取题型名称
+const getQuestionTypeName = (type) => {
+  const typeMap = {
+    1: '单选题',
+    2: '多选题',
+    3: '判断题',
+    4: '填空题',
+    5: '简答题',
+    6: '组合题'
+  }
+  return typeMap[type] || '未知题型'
+}
+
+// 更新 AI 缓存
+const updateAiCache = ({ questionId, content }) => {
+  aiAnalysisCache.value.set(questionId, content)
 }
 
 defineExpose({

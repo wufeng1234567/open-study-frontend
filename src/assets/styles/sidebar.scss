@@ -24,8 +24,8 @@
     left: 0;
     z-index: 1001;
     overflow: hidden;
-    -webkit-box-shadow: 2px 0 6px rgba(0,21,41,.35);
-    box-shadow: 2px 0 6px rgba(0,21,41,.35);
+    border-right: 1px solid #e5e7eb;
+    box-shadow: none;
 
     // reset element-ui css
     .horizontal-collapse-transition {
@@ -46,7 +46,7 @@
 
     &.has-logo {
       .el-scrollbar {
-        height: calc(100% - 50px);
+        height: calc(100% - 60px);
       }
     }
 
@@ -61,13 +61,15 @@
     }
 
     .svg-icon {
-      margin-right: 16px;
+      margin-right: 12px;
+      font-size: 18px;
     }
 
     .el-menu {
       border: none;
       height: 100%;
       width: 100% !important;
+      padding: 8px;
     }
 
     .el-menu-item, .menu-title {
@@ -80,11 +82,39 @@
       display: inline-block !important;
     }
 
-    // menu hover
+    // menu item 菜单项样式
+    .el-menu-item,
     .sub-menu-title-noDropdown,
     .el-sub-menu__title {
+      border-radius: 8px;
+      margin: 2px 0;
+      height: 44px;
+      line-height: 44px;
+      transition: all 0.2s ease-in-out;
+
       &:hover {
-        background-color: rgba(0, 0, 0, 0.06) !important;
+        background-color: #f3f4f6 !important;
+        color: #111827 !important;
+      }
+    }
+
+    // 激活态菜单项
+    .el-menu-item.is-active {
+      background-color: #f3f4f6 !important;
+      color: #111827 !important;
+      font-weight: 600;
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 20px;
+        background-color: #1f2937;
+        border-radius: 0 2px 2px 0;
       }
     }
 
@@ -95,15 +125,19 @@
     & .nest-menu .el-sub-menu>.el-sub-menu__title,
     & .el-sub-menu .el-menu-item {
       min-width: $base-sidebar-width !important;
+      border-radius: 8px;
+      margin: 2px 0;
+      transition: all 0.2s ease-in-out;
 
       &:hover {
-        background-color: rgba(0, 0, 0, 0.06) !important;
+        background-color: #f3f4f6 !important;
       }
     }
 
     & .theme-dark .nest-menu .el-sub-menu>.el-sub-menu__title,
     & .theme-dark .el-sub-menu .el-menu-item {
       background-color: $base-sub-menu-background !important;
+      transition: all 0.2s ease-in-out;
 
       &:hover {
         background-color: $base-sub-menu-hover !important;

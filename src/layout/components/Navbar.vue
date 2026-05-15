@@ -132,22 +132,26 @@ function setLayout() {
 
 <style lang='scss' scoped>
 .navbar {
-  height: 50px;
+  height: 60px;
   overflow: hidden;
   position: relative;
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: none;
 
   .hamburger-container {
-    line-height: 46px;
+    line-height: 60px;
     height: 100%;
     float: left;
     cursor: pointer;
-    transition: background 0.3s;
+    transition: all 0.2s ease-in-out;
     -webkit-tap-highlight-color: transparent;
+    padding: 0 16px;
 
     &:hover {
-      background: rgba(0, 0, 0, 0.025);
+      background: #f5f7fa;
     }
   }
 
@@ -168,51 +172,62 @@ function setLayout() {
   .right-menu {
     float: right;
     height: 100%;
-    line-height: 50px;
     display: flex;
+    align-items: center;
+    padding-right: 16px;
 
     &:focus {
       outline: none;
     }
 
     .right-menu-item {
-      display: inline-block;
-      padding: 0 8px;
-      height: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 12px;
+      height: 36px;
       font-size: 18px;
-      color: #5a5e66;
-      vertical-align: text-bottom;
+      color: #6b7280;
+      border-radius: 8px;
+      transition: all 0.2s ease-in-out;
 
       &.hover-effect {
         cursor: pointer;
-        transition: background 0.3s;
 
         &:hover {
-          background: rgba(0, 0, 0, 0.025);
+          background: #f3f4f6;
+          color: #374151;
         }
       }
     }
 
     .avatar-container {
-      margin-right: 40px;
+      margin-left: 8px;
 
       .avatar-wrapper {
-        margin-top: 5px;
         position: relative;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 12px;
+        border-radius: 8px;
+        transition: all 0.2s ease-in-out;
+
+        &:hover {
+          background: #f5f7fa;
+        }
 
         .user-avatar {
           cursor: pointer;
-          width: 40px;
-          height: 40px;
-          border-radius: 10px;
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
         }
 
         i {
           cursor: pointer;
-          position: absolute;
-          right: -20px;
-          top: 25px;
           font-size: 12px;
+          color: #6b7280;
         }
       }
     }

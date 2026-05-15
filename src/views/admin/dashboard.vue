@@ -1,8 +1,5 @@
 <template>
     <div class="admin-dashboard">
-
-
-
         <!-- 统计卡片 -->
         <el-row :gutter="20" class="stat-cards">
             <el-col :xs="24" :sm="12" :lg="6">
@@ -15,12 +12,6 @@
                     <div class="stat-content">
                         <div class="stat-value">{{ stats.userCount }}</div>
                         <div class="stat-label">用户总数</div>
-                        <div class="stat-trend up">
-                            <el-icon>
-                                <Top />
-                            </el-icon>
-                            <span>较昨日 +12%</span>
-                        </div>
                     </div>
                 </el-card>
             </el-col>
@@ -29,18 +20,12 @@
                 <el-card shadow="hover" class="stat-card">
                     <div class="stat-icon success">
                         <el-icon>
-                            <Reading />
+                            <Collection />
                         </el-icon>
                     </div>
                     <div class="stat-content">
-                        <div class="stat-value">{{ stats.courseCount }}</div>
-                        <div class="stat-label">课程总数</div>
-                        <div class="stat-trend up">
-                            <el-icon>
-                                <Top />
-                            </el-icon>
-                            <span>本周新增 +8</span>
-                        </div>
+                        <div class="stat-value">{{ stats.questionBankCount }}</div>
+                        <div class="stat-label">题库总数</div>
                     </div>
                 </el-card>
             </el-col>
@@ -49,35 +34,26 @@
                 <el-card shadow="hover" class="stat-card">
                     <div class="stat-icon warning">
                         <el-icon>
-                            <View />
+                            <EditPen />
                         </el-icon>
                     </div>
                     <div class="stat-content">
-                        <div class="stat-value">{{ stats.todayVisit }}</div>
-                        <div class="stat-label">今日访问</div>
-                        <div class="stat-trend down">
-                            <el-icon>
-                                <Bottom />
-                            </el-icon>
-                            <span>较昨日 -3%</span>
-                        </div>
+                        <div class="stat-value">{{ stats.questionCount }}</div>
+                        <div class="stat-label">题目总数</div>
                     </div>
                 </el-card>
             </el-col>
 
             <el-col :xs="24" :sm="12" :lg="6">
                 <el-card shadow="hover" class="stat-card">
-                    <div class="stat-icon danger">
+                    <div class="stat-icon info">
                         <el-icon>
-                            <ChatDotRound />
+                            <Notebook />
                         </el-icon>
                     </div>
                     <div class="stat-content">
-                        <div class="stat-value">{{ stats.messageCount }}</div>
-                        <div class="stat-label">未读消息</div>
-                        <div class="stat-trend normal">
-                            <span>共 {{ stats.totalMessage }} 条</span>
-                        </div>
+                        <div class="stat-value">{{ stats.noteCount }}</div>
+                        <div class="stat-label">笔记总数</div>
                     </div>
                 </el-card>
             </el-col>
@@ -88,18 +64,31 @@
             <el-col :xs="24" :lg="12">
                 <el-card shadow="hover" class="chart-card">
                     <template #header>
-                        <span>近一周访问趋势</span>
+                        <span>题库分类统计</span>
                     </template>
-                    <div ref="visitChartRef" class="chart-container"></div>
+                    <div ref="categoryChartRef" class="chart-container"></div>
                 </el-card>
             </el-col>
 
             <el-col :xs="24" :lg="12">
                 <el-card shadow="hover" class="chart-card">
                     <template #header>
-                        <span>课程分类统计</span>
+                        <span>最近活动</span>
                     </template>
-                    <div ref="categoryChartRef" class="chart-container"></div>
+                    <div class="recent-activity">
+                        <div v-for="(item, index) in recentActivities" :key="index" class="activity-item">
+                            <div class="activity-icon" :class="item.type">
+                                <el-icon>
+                                    <component :is="item.icon" />
+                                </el-icon>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-text">{{ item.text }}</div>
+                                <div class="activity-time">{{ item.time }}</div>
+                            </div>
+                        </div>
+                        <el-empty v-if="recentActivities.length === 0" description="暂无活动记录" :image-size="80" />
+                    </div>
                 </el-card>
             </el-col>
         </el-row>
@@ -108,22 +97,37 @@
             <el-col :xs="24" :lg="16">
                 <el-card shadow="hover" class="chart-card">
                     <template #header>
-                        <span>学习时长排行</span>
+                        <span>用户增长趋势</span>
                     </template>
-                    <div ref="rankChartRef" class="chart-container"></div>
+                    <div ref="userGrowthChartRef" class="chart-container"></div>
                 </el-card>
             </el-col>
 
             <el-col :xs="24" :lg="8">
                 <el-card shadow="hover" class="chart-card">
                     <template #header>
-                        <span>热门课程 Top5</span>
+                        <span>系统信息</span>
                     </template>
-                    <div class="hot-course-list">
-                        <div v-for="(course, index) in hotCourses" :key="index" class="course-item">
-                            <span class="rank" :class="{ top: index < 3 }">{{ index + 1 }}</span>
-                            <span class="name">{{ course.name }}</span>
-                            <span class="count">{{ course.count }}人</span>
+                    <div class="system-info">
+                        <div class="info-item">
+                            <span class="info-label">系统名称</span>
+                            <span class="info-value">OpenStudy 学习平台</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">后端框架</span>
+                            <span class="info-value">Spring Boot 3.5</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">前端框架</span>
+                            <span class="info-value">Vue3 + Element Plus</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">数据库</span>
+                            <span class="info-value">MySQL</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">当前时间</span>
+                            <span class="info-value">{{ currentTime }}</span>
                         </div>
                     </div>
                 </el-card>
@@ -134,78 +138,86 @@
 
 <script setup name="AdminDashboard">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-// import { useRouter } from 'vue-router'
-import { Switch, User, Reading, View, ChatDotRound, Top, Bottom } from '@element-plus/icons-vue'
+import { User, Collection, EditPen, Notebook, Document, UserFilled, ChatDotRound } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
-
-// const router = useRouter()
+import { getDashboardStats } from '@/api/dashboard'
 
 // 统计数据
 const stats = ref({
-    userCount: 1234,
-    courseCount: 56,
-    todayVisit: 2345,
-    messageCount: 18,
-    totalMessage: 128
+    userCount: 0,
+    questionBankCount: 0,
+    questionCount: 0,
+    noteCount: 0
 })
 
-// 热门课程
-const hotCourses = ref([
-    { name: 'Vue3 从入门到精通', count: 1234 },
-    { name: 'Spring Boot 实战', count: 987 },
-    { name: '数据结构与算法', count: 856 },
-    { name: 'Python 数据分析', count: 745 },
-    { name: 'MySQL 数据库设计', count: 632 }
-])
+// 最近活动
+const recentActivities = ref([])
+
+// 当前时间
+const currentTime = ref('')
+let timeTimer = null
 
 // 图表引用
-const visitChartRef = ref(null)
 const categoryChartRef = ref(null)
-const rankChartRef = ref(null)
-let visitChart = null
+const userGrowthChartRef = ref(null)
 let categoryChart = null
-let rankChart = null
+let userGrowthChart = null
 
-
-
-// 初始化访问趋势图
-function initVisitChart() {
-    if (!visitChartRef.value) return
-
-    visitChart = echarts.init(visitChartRef.value)
-    const option = {
-        tooltip: { trigger: 'axis' },
-        grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-        xAxis: {
-            type: 'category',
-            data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
-            axisLine: { lineStyle: { color: '#ccc' } }
-        },
-        yAxis: {
-            type: 'value',
-            axisLine: { lineStyle: { color: '#ccc' } }
-        },
-        series: [{
-            name: '访问量',
-            type: 'line',
-            smooth: true,
-            data: [820, 932, 901, 934, 1290, 1330, 1320],
-            areaStyle: {
-                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                    { offset: 0, color: 'rgba(103, 126, 234, 0.3)' },
-                    { offset: 1, color: 'rgba(103, 126, 234, 0.05)' }
-                ])
-            },
-            lineStyle: { color: '#667eea', width: 3 },
-            itemStyle: { color: '#667eea' }
-        }]
+// 获取统计数据
+async function fetchStats() {
+    try {
+        const res = await getDashboardStats()
+        if (res.code === 200 && res.data) {
+            stats.value = {
+                userCount: res.data.userCount || 0,
+                questionBankCount: res.data.questionBankCount || 0,
+                questionCount: res.data.questionCount || 0,
+                noteCount: res.data.noteCount || 0
+            }
+            // 更新图表数据
+            if (res.data.categoryStats) {
+                initCategoryChart(res.data.categoryStats)
+            }
+            if (res.data.userGrowth) {
+                initUserGrowthChart(res.data.userGrowth)
+            }
+        }
+    } catch (e) {
+        console.warn('Dashboard API 未实现，使用默认数据')
+        // API 未实现时使用默认数据
+        stats.value = {
+            userCount: 0,
+            questionBankCount: 0,
+            questionCount: 0,
+            noteCount: 0
+        }
+        initCategoryChart([{ value: 0, name: '暂无数据' }])
+        initUserGrowthChart({
+            dates: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+            counts: [0, 0, 0, 0, 0, 0, 0]
+        })
     }
-    visitChart.setOption(option)
+}
+
+// 更新当前时间
+function updateTime() {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    const hours = String(now.getHours()).padStart(2, '0')
+    const minutes = String(now.getMinutes()).padStart(2, '0')
+    const seconds = String(now.getSeconds()).padStart(2, '0')
+    currentTime.value = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
 // 初始化分类统计图
-function initCategoryChart() {
+function initCategoryChart(data) {
     if (!categoryChartRef.value) return
+
+    if (categoryChart) {
+        categoryChart.dispose()
+    }
 
     categoryChart = echarts.init(categoryChartRef.value)
     const option = {
@@ -224,66 +236,77 @@ function initCategoryChart() {
             emphasis: {
                 label: { show: true, fontSize: 14, fontWeight: 'bold' }
             },
-            data: [
-                { value: 18, name: '前端开发' },
-                { value: 12, name: '后端开发' },
-                { value: 8, name: '数据库' },
-                { value: 10, name: '算法' },
-                { value: 8, name: '人工智能' }
+            data: data || [
+                { value: 0, name: '暂无数据' }
             ]
         }]
     }
     categoryChart.setOption(option)
 }
 
-// 初始化排行图
-function initRankChart() {
-    if (!rankChartRef.value) return
+// 初始化用户增长趋势图
+function initUserGrowthChart(data) {
+    if (!userGrowthChartRef.value) return
 
-    rankChart = echarts.init(rankChartRef.value)
+    if (userGrowthChart) {
+        userGrowthChart.dispose()
+    }
+
+    userGrowthChart = echarts.init(userGrowthChartRef.value)
     const option = {
-        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-        grid: { left: '10%', right: '4%', bottom: '3%', containLabel: true },
-        xAxis: { type: 'value' },
-        yAxis: {
+        tooltip: { trigger: 'axis' },
+        grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+        xAxis: {
             type: 'category',
-            data: ['张三', '李四', '王五', '赵六', '钱七']
+            data: data?.dates || ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+            axisLine: { lineStyle: { color: '#ccc' } }
+        },
+        yAxis: {
+            type: 'value',
+            axisLine: { lineStyle: { color: '#ccc' } }
         },
         series: [{
-            name: '学习时长(小时)',
-            type: 'bar',
-            data: [42, 38, 35, 30, 28],
-            itemStyle: {
-                color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                    { offset: 0, color: '#667eea' },
-                    { offset: 1, color: '#764ba2' }
+            name: '新增用户',
+            type: 'line',
+            smooth: true,
+            data: data?.counts || [0, 0, 0, 0, 0, 0, 0],
+            areaStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: 'rgba(107, 114, 128, 0.3)' },
+                    { offset: 1, color: 'rgba(107, 114, 128, 0.05)' }
                 ])
-            }
+            },
+            lineStyle: { color: '#6b7280', width: 3 },
+            itemStyle: { color: '#6b7280' }
         }]
     }
-    rankChart.setOption(option)
+    userGrowthChart.setOption(option)
 }
 
 // 窗口大小变化时重绘图表
 function handleResize() {
-    visitChart?.resize()
     categoryChart?.resize()
-    rankChart?.resize()
+    userGrowthChart?.resize()
 }
 
 onMounted(async () => {
     await nextTick()
-    initVisitChart()
-    initCategoryChart()
-    initRankChart()
+    updateTime()
+    timeTimer = setInterval(updateTime, 1000)
     window.addEventListener('resize', handleResize)
+    // 延迟初始化图表，确保 DOM 已渲染
+    setTimeout(() => {
+        fetchStats()
+    }, 100)
 })
 
 onUnmounted(() => {
     window.removeEventListener('resize', handleResize)
-    visitChart?.dispose()
+    if (timeTimer) {
+        clearInterval(timeTimer)
+    }
     categoryChart?.dispose()
-    rankChart?.dispose()
+    userGrowthChart?.dispose()
 })
 </script>
 
@@ -291,13 +314,12 @@ onUnmounted(() => {
 .admin-dashboard {
     padding: 20px;
 
-    .switch-bar {
-        text-align: right;
-        margin-bottom: 20px;
-    }
-
     .stat-cards {
-        margin-bottom: 20px;
+        margin-bottom: 10px;
+
+        :deep(.el-col) {
+            margin-bottom: 5px;
+        }
 
         .stat-card {
             :deep(.el-card__body) {
@@ -321,19 +343,19 @@ onUnmounted(() => {
                 }
 
                 &.primary {
-                    background: linear-gradient(135deg, #667eea, #764ba2);
+                    background: linear-gradient(135deg, #6b7280, #9ca3af);
                 }
 
                 &.success {
-                    background: linear-gradient(135deg, #67c23a, #85ce61);
+                    background: linear-gradient(135deg, #059669, #34d399);
                 }
 
                 &.warning {
-                    background: linear-gradient(135deg, #e6a23c, #ebb563);
+                    background: linear-gradient(135deg, #d97706, #fbbf24);
                 }
 
-                &.danger {
-                    background: linear-gradient(135deg, #f56c6c, #f78989);
+                &.info {
+                    background: linear-gradient(135deg, #3b82f6, #60a5fa);
                 }
             }
 
@@ -343,40 +365,25 @@ onUnmounted(() => {
                 .stat-value {
                     font-size: 32px;
                     font-weight: 700;
-                    color: #303133;
+                    color: #1f2937;
                     line-height: 1.2;
                 }
 
                 .stat-label {
                     font-size: 14px;
-                    color: #909399;
+                    color: #6b7280;
                     margin: 4px 0;
-                }
-
-                .stat-trend {
-                    font-size: 12px;
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-
-                    &.up {
-                        color: #67c23a;
-                    }
-
-                    &.down {
-                        color: #f56c6c;
-                    }
-
-                    &.normal {
-                        color: #909399;
-                    }
                 }
             }
         }
     }
 
     .chart-row {
-        margin-bottom: 20px;
+        margin-bottom: 10px;
+
+        :deep(.el-col) {
+            margin-bottom: 5px;
+        }
 
         .chart-card {
             .chart-container {
@@ -384,41 +391,90 @@ onUnmounted(() => {
                 width: 100%;
             }
 
-            .hot-course-list {
-                .course-item {
+            .recent-activity {
+                max-height: 300px;
+                overflow-y: auto;
+
+                .activity-item {
                     display: flex;
-                    align-items: center;
+                    align-items: flex-start;
                     padding: 12px 0;
-                    border-bottom: 1px solid #f0f0f0;
+                    border-bottom: 1px solid #f3f4f6;
 
                     &:last-child {
                         border-bottom: none;
                     }
 
-                    .rank {
-                        width: 30px;
-                        height: 30px;
-                        border-radius: 50%;
-                        background: #f5f7fa;
+                    .activity-icon {
+                        width: 36px;
+                        height: 36px;
+                        border-radius: 8px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
                         margin-right: 12px;
-                        color: #909399;
+                        flex-shrink: 0;
 
-                        &.top {
-                            background: linear-gradient(135deg, #ffd700, #ffed4e);
-                            color: #333;
+                        .el-icon {
+                            font-size: 18px;
+                            color: white;
+                        }
+
+                        &.user {
+                            background: #6b7280;
+                        }
+
+                        &.question {
+                            background: #059669;
+                        }
+
+                        &.note {
+                            background: #3b82f6;
+                        }
+
+                        &.message {
+                            background: #d97706;
                         }
                     }
 
-                    .name {
+                    .activity-content {
                         flex: 1;
-                        color: #303133;
+
+                        .activity-text {
+                            font-size: 14px;
+                            color: #374151;
+                            line-height: 1.5;
+                        }
+
+                        .activity-time {
+                            font-size: 12px;
+                            color: #9ca3af;
+                            margin-top: 4px;
+                        }
+                    }
+                }
+            }
+
+            .system-info {
+                .info-item {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 12px 0;
+                    border-bottom: 1px solid #f3f4f6;
+
+                    &:last-child {
+                        border-bottom: none;
                     }
 
-                    .count {
-                        color: #909399;
+                    .info-label {
+                        font-size: 14px;
+                        color: #6b7280;
+                    }
+
+                    .info-value {
+                        font-size: 14px;
+                        color: #1f2937;
+                        font-weight: 500;
                     }
                 }
             }

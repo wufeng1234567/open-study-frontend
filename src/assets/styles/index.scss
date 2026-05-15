@@ -13,10 +13,13 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   font-family: Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Arial, sans-serif;
+  color: #1f2937;
+  background-color: #f9fafb;
 }
 
 label {
-  font-weight: 700;
+  font-weight: 600;
+  color: #374151;
 }
 
 html {
@@ -99,24 +102,25 @@ div:focus {
 }
 
 aside {
-  background: #eef1f6;
-  padding: 8px 24px;
+  background: #f9fafb;
+  padding: 16px 24px;
   margin-bottom: 20px;
-  border-radius: 2px;
+  border-radius: 12px;
   display: block;
   line-height: 32px;
-  font-size: 16px;
+  font-size: 15px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-  color: #2c3e50;
+  color: #6b7280;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  border: 1px solid #e5e7eb;
 
   a {
-    color: #337ab7;
+    color: #6b7280;
     cursor: pointer;
 
     &:hover {
-      color: rgb(32, 160, 255);
+      color: #1f2937;
     }
   }
 }
@@ -132,7 +136,7 @@ aside {
 }
 
 .pagination-container {
-  margin-top: 30px;
+  margin-top: 20px;
 }
 
 .text-center {
@@ -147,29 +151,31 @@ aside {
   text-align: right;
   padding-right: 20px;
   transition: 600ms ease position;
-  background: linear-gradient(90deg, rgba(32, 182, 249, 1) 0%, rgba(32, 182, 249, 1) 0%, rgba(33, 120, 241, 1) 100%, rgba(33, 120, 241, 1) 100%);
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
 
   .subtitle {
-    font-size: 20px;
-    color: #fff;
+    font-size: 18px;
+    color: #1f2937;
+    font-weight: 600;
   }
 
   &.draft {
-    background: #d0d0d0;
+    background: #f9fafb;
   }
 
   &.deleted {
-    background: #d0d0d0;
+    background: #f9fafb;
   }
 }
 
 .link-type,
 .link-type:focus {
-  color: #337ab7;
+  color: #6b7280;
   cursor: pointer;
 
   &:hover {
-    color: rgb(32, 160, 255);
+    color: #1f2937;
   }
 }
 
@@ -182,88 +188,92 @@ aside {
     margin-bottom: 10px;
   }
 }
+
 /* 题型自定义标签样式 */
 .tag-question-single {
-  background-color: #409eff !important; /* 蓝色 - 单选 */
-  color: white !important;
-  border: none !important;
+  background-color: #f3f4f6 !important;
+  color: #1f2937 !important;
+  border: 1px solid #e5e7eb !important;
 }
 
 .tag-question-multiple {
-  background-color: #67c23a !important; /* 绿色 - 多选 */
-  color: white !important;
-  border: none !important;
+  background-color: #f0f9eb !important;
+  color: #67c23a !important;
+  border: 1px solid #e1f3d8 !important;
 }
 
 .tag-question-judge {
-  background-color: #e6a23c !important; /* 橙色 - 判断 */
-  color: white !important;
-  border: none !important;
+  background-color: #fefce8 !important;
+  color: #947a4a !important;
+  border: 1px solid #e5e0c0 !important;
 }
 
 .tag-question-blank {
-  background-color: #909399 !important; /* 灰色 - 填空 */
-  color: white !important;
-  border: none !important;
+  background-color: #f9fafb !important;
+  color: #6b7280 !important;
+  border: 1px solid #e5e7eb !important;
 }
 
 .tag-question-essay {
-  background-color: #b3d9ff !important; /* 浅蓝 - 简答 */
-  color: #2c3e50 !important;
-  border: 1px solid #80bdff !important;
+  background-color: #f9fafb !important;
+  color: #374151 !important;
+  border: 1px solid #d1d5db !important;
 }
 
 .tag-question-reading {
-  background-color: #f56c6c !important; /* 红色 - 阅读理解 */
-  color: white !important;
-  border: none !important;
+  background-color: #fef2f2 !important;
+  color: #b45353 !important;
+  border: 1px solid #e5d0d0 !important;
 }
 
 .tag-question-cloze {
-  background-color: #dcdfe6 !important; /* 浅灰 - 完形填空 */
-  color: #2c3e50 !important;
-  border: 1px dashed #a8abb2 !important;
+  background-color: #f9fafb !important;
+  color: #6b7280 !important;
+  border: 1px dashed #d1d5db !important;
 }
 
 /* src/assets/styles/common-status.scss */
 .tag-status-enabled {
-  background-color: #409eff !important;
-  color: white !important;
+  background-color: #f0f9eb !important;
+  color: #67c23a !important;
+  border: 1px solid #e1f3d8 !important;
 }
 
 .tag-status-disabled {
-  background-color: #f56c6c !important;
-  color: white !important;
+  background-color: #fef2f2 !important;
+  color: #b45353 !important;
+  border: 1px solid #e5d0d0 !important;
 }
 
 .tag-status-reviewing {
-  background-color: #e6a23c !important;
-  color: white !important;
+  background-color: #fefce8 !important;
+  color: #947a4a !important;
+  border: 1px solid #e5e0c0 !important;
 }
 
 /* 难度等级标签样式 */
 .tag-difficulty-easy {
-  background-color: #67c23a !important; /* 绿色 - 简单 */
-  color: white !important;
-  border: none !important;
+  background-color: #f0f9eb !important;
+  color: #67c23a !important;
+  border: 1px solid #e1f3d8 !important;
 }
 
 .tag-difficulty-medium {
-  background-color: #e6a23c !important; /* 橙色 - 中等 */
-  color: white !important;
-  border: none !important;
+  background-color: #fefce8 !important;
+  color: #947a4a !important;
+  border: 1px solid #e5e0c0 !important;
 }
 
 .tag-difficulty-hard {
-  background-color: #f56c6c !important; /* 红色 - 困难 */
-  color: white !important;
-  border: none !important;
+  background-color: #fef2f2 !important;
+  color: #b45353 !important;
+  border: 1px solid #e5d0d0 !important;
 }
 
 .tag-difficulty-veryhard {
-  background: linear-gradient(135deg, #ff4d4f, #ff7a45) !important; /* 渐变红橙 - 极难 */
-  color: white !important;
-  border: none !important;
-  font-weight: bold;
+  background: #fef2f2 !important;
+  color: #9b3a3a !important;
+  border: 1px solid #e5d0d0 !important;
+  font-weight: 600;
 }
 

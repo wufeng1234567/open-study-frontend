@@ -927,6 +927,17 @@ const getPreviewOptions = (options) => {
                 display: block;
                 margin-bottom: 4px;
               }
+
+              :deep(img) {
+                max-width: 100% !important;
+                max-height: 120px !important;
+                width: auto !important;
+                height: auto !important;
+                object-fit: contain !important;
+                border-radius: 4px;
+                margin: 4px 0;
+                vertical-align: middle;
+              }
             }
 
             .options-preview {
@@ -948,6 +959,14 @@ const getPreviewOptions = (options) => {
                   color: #606266;
                   font-size: 13px;
                   line-height: 1.5;
+
+                  :deep(img) {
+                    max-width: 80px !important;
+                    max-height: 40px !important;
+                    object-fit: contain !important;
+                    border-radius: 2px;
+                    vertical-align: middle;
+                  }
                 }
               }
             }
@@ -968,6 +987,15 @@ const getPreviewOptions = (options) => {
                 font-size: 13px;
                 color: #606266;
                 line-height: 1.5;
+                overflow: hidden;
+
+                :deep(img) {
+                  max-width: 100% !important;
+                  max-height: 60px !important;
+                  object-fit: contain !important;
+                  border-radius: 2px;
+                  vertical-align: middle;
+                }
               }
             }
 

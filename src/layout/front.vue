@@ -303,10 +303,10 @@ function logout() {
                 cursor: pointer;
                 padding: 8px 12px;
                 border-radius: 10px;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                transition: all 0.2s ease-in-out;
 
                 &:hover {
-                    background: #f3f4f6;
+                    background: #f5f7fa;
                 }
 
                 h1 {
@@ -329,13 +329,13 @@ function logout() {
                     font-weight: 500;
                     padding: 8px 16px;
                     border-radius: 8px;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    transition: all 0.2s ease-in-out;
                     position: relative;
                     cursor: pointer;
 
                     &:hover {
-                        color: #1f2937;
-                        background: #f3f4f6;
+                        color: #374151;
+                        background: #f5f7fa;
                     }
 
                     &.router-link-active {
@@ -367,11 +367,11 @@ function logout() {
                         color: #6b7280;
                         background: transparent;
                         border: none;
-                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        transition: all 0.2s ease-in-out;
 
                         &:hover {
-                            color: #409eff;
-                            background: #f3f4f6;
+                            color: #374151;
+                            background: #f5f7fa;
                         }
                     }
                 }
@@ -385,11 +385,11 @@ function logout() {
                     gap: 6px;
                     padding: 8px 14px;
                     border-radius: 8px;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    transition: all 0.2s ease-in-out;
 
                     &:hover {
-                        background: #f3f4f6;
-                        color: #1f2937;
+                        background: #f5f7fa;
+                        color: #374151;
                     }
                 }
             }
@@ -543,20 +543,20 @@ function logout() {
     border-radius: 8px;
     font-weight: 500;
     padding: 6px 14px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease-in-out;
     background: #fff;
     border: 1px solid #e5e7eb;
-    color: #6b7280;
+    color: #374151;
 
     &:hover {
-        transform: translateY(-2px);
-        border-color: #b3b3b3;
-        color: #4b5563;
+        border-color: #d1d5db;
+        color: #111827;
         background: #fff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
     }
 
     &:active {
-        transform: translateY(0);
+        box-shadow: none;
     }
 }
 
@@ -564,13 +564,12 @@ function logout() {
 .front-layout .user-area .el-button--primary {
     background: #fff;
     border-color: #d1d5db;
-    color: #1f2937;
+    color: #111827;
 
     &:hover {
         background: #fff;
         border-color: #9ca3af;
-        color: #1f2937;
-        transform: translateY(-2px);
+        color: #111827;
     }
 }
 
@@ -579,11 +578,11 @@ function logout() {
     border-radius: 6px;
     margin: 2px 6px;
     padding: 8px 12px;
-    transition: all 0.2s ease;
+    transition: all 0.2s ease-in-out;
 
     &:hover {
         background: #f3f4f6;
-        color: #1f2937;
+        color: #111827;
     }
 }
 
@@ -616,10 +615,16 @@ function logout() {
 .el-pagination {
     .el-pager li {
         border-radius: 6px;
+        transition: all 0.2s ease-in-out;
+
+        &:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
 
         &.is-active {
             background: #f3f4f6;
-            color: #1f2937;
+            color: #111827;
         }
     }
 }
@@ -636,6 +641,7 @@ function logout() {
 
 .el-select-dropdown__item {
     border-radius: 8px;
+    transition: all 0.2s ease-in-out;
 
     &:hover {
         background: #f3f4f6;
@@ -646,7 +652,7 @@ function logout() {
 .el-input__wrapper {
     border-radius: 8px;
     box-shadow: 0 0 0 1px #e5e7eb;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease-in-out;
 
     &:hover {
         box-shadow: 0 0 0 1px #d1d5db;
@@ -660,7 +666,7 @@ function logout() {
 .el-textarea__inner {
     border-radius: 8px;
     border-color: #e5e7eb;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease-in-out;
 
     &:hover {
         border-color: #d1d5db;

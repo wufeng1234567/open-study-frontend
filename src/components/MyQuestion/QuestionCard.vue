@@ -405,6 +405,17 @@ const handleUncollect = () => {
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
+
+      :deep(img) {
+        max-width: 100% !important;
+        max-height: 120px !important;
+        width: auto !important;
+        height: auto !important;
+        object-fit: contain !important;
+        border-radius: 4px;
+        margin: 4px 0;
+        vertical-align: middle;
+      }
     }
 
     .mastery-status {
@@ -483,6 +494,14 @@ const handleUncollect = () => {
           font-weight: 500;
           margin-right: 4px;
         }
+
+        :deep(img) {
+          max-width: 80px !important;
+          max-height: 40px !important;
+          object-fit: contain !important;
+          border-radius: 2px;
+          vertical-align: middle;
+        }
       }
     }
 
@@ -505,6 +524,15 @@ const handleUncollect = () => {
         padding: 6px 10px;
         border-radius: 4px;
         border-left: 3px solid #e6a23c;
+        overflow: hidden;
+
+        :deep(img) {
+          max-width: 100% !important;
+          max-height: 60px !important;
+          object-fit: contain !important;
+          border-radius: 2px;
+          vertical-align: middle;
+        }
       }
     }
 
@@ -526,6 +554,16 @@ const handleUncollect = () => {
         padding: 8px 10px;
         border-radius: 4px;
         border-left: 3px solid #6b9ac9;
+        overflow: hidden;
+
+        :deep(img) {
+          max-width: 100% !important;
+          max-height: 80px !important;
+          object-fit: contain !important;
+          border-radius: 4px;
+          margin: 4px 0;
+          vertical-align: middle;
+        }
       }
     }
 
