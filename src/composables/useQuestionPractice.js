@@ -5,6 +5,24 @@ import { parseOptions } from '@/utils/questionUtils'
 import { recordOrUpdateError, checkUserErrorExists } from '@/api/questionError/questionError'
 import { listQuestionErrorAll } from '@/api/questionError/questionError'
 import useUserStore from '@/store/modules/user'
+import usePracticeSettingsStore from '@/store/modules/practiceSettings'
+
+// 调试日志工具
+import {
+  debugFetchStart,
+  debugFetchComplete,
+  debugProcessStart,
+  debugCacheCheck,
+  debugShuffle,
+  debugCacheWrite,
+  debugSetAllQuestionsData,
+  debugSetQuestions,
+  debugProcessComplete,
+  debugResetAndFetch,
+  debugFetchQuestions,
+  debugStateSnapshot,
+  debugCacheStatus
+} from '@/utils/practiceDebug'
 
 export function useQuestionPractice(props, { proxy }, options = {}) {
   const {
@@ -29,8 +47,17 @@ export function useQuestionPractice(props, { proxy }, options = {}) {
   const loading = ref(true)
   const submissionLock = ref(false)
 
+  // 乱序结果缓存：key 为 `${bankId}_${moduleType}`，value 为打乱后的数据
+  const shuffledCache = new Map()
+  // 答题状态缓存：key 为 `${bankId}_${moduleType}`，value 为答题状态
+  const answerStateCache = new Map()
+  // 标志位：是否正在重置中（防止二次触发）
+  const isResetting = ref(false)
+
   // 获取用户store
   const userStore = useUserStore()
+  // 获取刷题设置store
+  const store = usePracticeSettingsStore()
 
   const subFillBlankAnswers = ref({})
   const subEssayAnswers = ref({})
@@ -177,20 +204,52 @@ export function useQuestionPractice(props, { proxy }, options = {}) {
   // 通用题目处理函数 - 现在可被外部调用
   async function processQuestions(data) {
     const count = questionCount.value
-    const shouldShuffle = props.moduleType === 'random' || props.moduleType === 'mock'
+    // 判断是否需要打乱题目顺序：随机/模拟考试固定打乱，自定义练习根据 shuffleOptions 设置
+    const moduleSettings = store.getModuleSettings(props.moduleType)
+    const shouldShuffle = props.moduleType === 'random' || props.moduleType === 'mock' ||
+                         (props.moduleType === 'custom' && moduleSettings.shuffleOptions)
     const offset = questionOffset.value
 
-    if (shouldShuffle) {
-      allQuestionsData.value = data
+    // 调试日志：开始处理
+    debugProcessStart(props.moduleType, data, { shouldShuffle, questionCount: count, offset })
 
-      const shuffled = [...data]
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    if (shouldShuffle) {
+      // 检查缓存：如果已有乱序结果，直接使用
+      const cacheKey = `${props.bankId}_${props.moduleType}`
+      let shuffled
+
+      const hasCache = shuffledCache.has(cacheKey)
+      debugCacheCheck(props.moduleType, cacheKey, hasCache, hasCache ? shuffledCache.get(cacheKey) : null)
+
+      if (hasCache) {
+        // 使用缓存的乱序结果
+        shuffled = shuffledCache.get(cacheKey)
+      } else {
+        // 首次进入，生成乱序并缓存
+        shuffled = [...data]
+        const beforeShuffle = [...shuffled]
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+        }
+
+        // 调试日志：打乱前后对比
+        debugShuffle(props.moduleType, beforeShuffle, shuffled)
+        debugCacheWrite(props.moduleType, cacheKey, shuffled)
+        shuffledCache.set(cacheKey, shuffled)
       }
+
+      // 调试日志：设置 allQuestionsData
+      debugSetAllQuestionsData(props.moduleType, shuffled, 'processQuestions(shuffle)')
+
+      // 将打乱后的数组保存到 allQuestionsData，确保后续切片保持乱序
+      allQuestionsData.value = shuffled
 
       const sliceEnd = count === 'all' ? shuffled.length : count
       const slicedData = shuffled.slice(0, sliceEnd)
+
+      // 调试日志：设置 questions
+      debugSetQuestions(props.moduleType, slicedData, 'processQuestions(shuffle)')
 
       questions.value = slicedData.map((q) => {
         const processed = transformQuestionForDisplay(q)
@@ -202,6 +261,9 @@ export function useQuestionPractice(props, { proxy }, options = {}) {
           userAnswer: null
         }
       })
+
+      // 调试日志：处理完成
+      debugProcessComplete(props.moduleType, questions.value, allQuestionsData.value)
 
       if (onlyWrong.value) {
         await filterOnlyWrongQuestions()
@@ -221,7 +283,12 @@ export function useQuestionPractice(props, { proxy }, options = {}) {
       const sliceEnd = count === 'all' ? data.length : Math.min(offset + count, data.length)
       const slicedData = data.slice(offset, sliceEnd)
 
+      // 调试日志：设置 allQuestionsData（顺序模式）
+      debugSetAllQuestionsData(props.moduleType, data, 'processQuestions(sequential)')
       allQuestionsData.value = data
+
+      // 调试日志：设置 questions（顺序模式）
+      debugSetQuestions(props.moduleType, slicedData, 'processQuestions(sequential)')
 
       questions.value = slicedData.map((q) => {
         const processed = transformQuestionForDisplay(q)
@@ -331,7 +398,18 @@ export function useQuestionPractice(props, { proxy }, options = {}) {
       sliceEnd = Math.min(offset + 10, allQuestionsData.value.length)
     }
 
-    questions.value = allQuestionsData.value.slice(offset, sliceEnd)
+    // 对切片后的数据调用 transformQuestionForDisplay 转换
+    const slicedData = allQuestionsData.value.slice(offset, sliceEnd)
+    questions.value = slicedData.map(q => {
+      const processed = transformQuestionForDisplay(q)
+      return {
+        ...processed,
+        answered: false,
+        correct: false,
+        showAnalysis: false,
+        userAnswer: null
+      }
+    })
 
     answers.value = questions.value.map(q => {
       if (['readingComprehension', 'cloze'].includes(q.type)) {
@@ -342,6 +420,122 @@ export function useQuestionPractice(props, { proxy }, options = {}) {
 
     currentQuestionIndex.value = 0
     selectedAnswer.value = null
+    loading.value = false
+  }
+
+  // 新增：更新题目数量并重新切片，保留已答题目的状态
+  function updateQuestionCountAndSlice(newCount) {
+    questionCount.value = newCount
+
+    // 如果 allQuestionsData 为空，不需要处理
+    if (allQuestionsData.value.length === 0) {
+      return
+    }
+
+    // 保存当前题目的答题状态（通过题目 ID 映射）
+    const oldQuestionsMap = new Map()
+    questions.value.forEach((q, index) => {
+      if (q && q.id) {
+        oldQuestionsMap.set(q.id, {
+          question: q,
+          answer: answers.value[index],
+          index: index
+        })
+      }
+    })
+
+    // 计算新的偏移量，保持在当前批次的起始位置
+    let newOffset = 0
+    if (newCount !== 'all' && typeof newCount === 'number') {
+      newOffset = Math.floor(questionOffset.value / newCount) * newCount
+    }
+    questionOffset.value = Math.max(0, newOffset)
+
+    // 从 allQuestionsData 中重新切片
+    let sliceEnd
+    if (newCount === 'all') {
+      sliceEnd = allQuestionsData.value.length
+    } else if (typeof newCount === 'number') {
+      sliceEnd = Math.min(newOffset + newCount, allQuestionsData.value.length)
+    } else {
+      sliceEnd = Math.min(newOffset + 10, allQuestionsData.value.length)
+    }
+
+    const newData = allQuestionsData.value.slice(newOffset, sliceEnd)
+
+    // 处理新数据，保留已答题目的状态
+    questions.value = newData.map(q => {
+      const processed = transformQuestionForDisplay(q)
+      const existing = oldQuestionsMap.get(q.id)
+
+      if (existing) {
+        // 保留已答题目的状态
+        return {
+          ...processed,
+          answered: existing.question.answered,
+          correct: existing.question.correct,
+          showAnalysis: existing.question.showAnalysis,
+          userAnswer: existing.question.userAnswer
+        }
+      }
+
+      return {
+        ...processed,
+        answered: false,
+        correct: false,
+        showAnalysis: false,
+        userAnswer: null
+      }
+    })
+
+    // 重新构建 answers 数组，保留已答题目的答案
+    const newAnswers = questions.value.map(q => {
+      const existing = oldQuestionsMap.get(q.id)
+      if (existing && existing.answer !== undefined) {
+        return existing.answer
+      }
+      if (['readingComprehension', 'cloze'].includes(q.type)) {
+        return {}
+      }
+      return null
+    })
+
+    answers.value = newAnswers
+
+    // 确保 currentQuestionIndex 在有效范围内
+    if (currentQuestionIndex.value >= questions.value.length) {
+      currentQuestionIndex.value = Math.max(0, questions.value.length - 1)
+    }
+
+    // 使用 goToQuestion 同步所有状态（包括 selectedAnswer、子题答案等）
+    const targetIndex = currentQuestionIndex.value
+    if (questions.value[targetIndex]) {
+      currentQuestionIndex.value = targetIndex
+      const q = questions.value[targetIndex]
+      const ans = answers.value[targetIndex]
+
+      // 对于阅读理解或完形填空，同步子题答案
+      if (['readingComprehension', 'cloze'].includes(q.type)) {
+        selectedAnswer.value = null
+        if (ans && ans.fillblank) {
+          subFillBlankAnswers.value = { ...ans.fillblank }
+        } else {
+          subFillBlankAnswers.value = {}
+        }
+        if (ans && ans.essay) {
+          subEssayAnswers.value = { ...ans.essay }
+        } else {
+          subEssayAnswers.value = {}
+        }
+      } else {
+        selectedAnswer.value = ans ?? null
+      }
+    } else {
+      selectedAnswer.value = null
+      subFillBlankAnswers.value = {}
+      subEssayAnswers.value = {}
+    }
+
     loading.value = false
   }
 
@@ -757,8 +951,171 @@ export function useQuestionPractice(props, { proxy }, options = {}) {
 
     return questionObj
   }
+
+  // 新增：重置所有数据并重新加载题目（用于模式切换）
+  // 保存当前答题状态到缓存
+  // moduleType 参数可选，用于在模式切换时指定旧的 moduleType
+  function saveCurrentAnswerState(moduleType) {
+    // 如果 moduleType 显式传入且为 undefined，说明是路由过渡，不保存
+    if (moduleType === undefined) {
+      console.log(`[CACHE] 跳过保存（路由过渡状态）`)
+      return
+    }
+    const type = moduleType || props.moduleType
+    if (!props.bankId || !type || questions.value.length === 0) return
+
+    const cacheKey = `${props.bankId}_${type}`
+    const state = {
+      questions: [...questions.value],
+      allQuestionsData: [...allQuestionsData.value],
+      answers: [...answers.value],
+      currentQuestionIndex: currentQuestionIndex.value,
+      selectedAnswer: selectedAnswer.value,
+      subFillBlankAnswers: { ...subFillBlankAnswers.value },
+      subEssayAnswers: { ...subEssayAnswers.value },
+      questionOffset: questionOffset.value,
+      questionCount: questionCount.value
+    }
+
+    answerStateCache.set(cacheKey, state)
+    console.log(`[CACHE] 保存答题状态: ${cacheKey}, 题目数: ${state.questions.length}, 当前题: ${state.currentQuestionIndex}`)
+  }
+
+  // 从缓存恢复答题状态
+  function restoreAnswerState() {
+    if (!props.bankId || !props.moduleType) return false
+
+    const cacheKey = `${props.bankId}_${props.moduleType}`
+    const state = answerStateCache.get(cacheKey)
+
+    if (!state) {
+      console.log(`[CACHE] 未找到缓存: ${cacheKey}`)
+      return false
+    }
+
+    console.log(`[CACHE] 恢复答题状态: ${cacheKey}, 题目数: ${state.questions.length}, 当前题: ${state.currentQuestionIndex}`)
+
+    questions.value = state.questions
+    allQuestionsData.value = state.allQuestionsData
+    answers.value = state.answers
+    currentQuestionIndex.value = state.currentQuestionIndex
+    selectedAnswer.value = state.selectedAnswer
+    subFillBlankAnswers.value = state.subFillBlankAnswers
+    subEssayAnswers.value = state.subEssayAnswers
+    questionOffset.value = state.questionOffset
+    questionCount.value = state.questionCount
+    loading.value = false
+
+    return true
+  }
+
+  // 清除指定模块的答题状态缓存
+  function clearAnswerStateCache(moduleType) {
+    if (!props.bankId || !moduleType) {
+      console.log(`[CACHE] 清除缓存失败: bankId=${props.bankId}, moduleType=${moduleType}`)
+      return
+    }
+    const cacheKey = `${props.bankId}_${moduleType}`
+    const hadCache = answerStateCache.has(cacheKey)
+    answerStateCache.delete(cacheKey)
+    console.log(`[CACHE] 清除答题状态缓存: ${cacheKey}, 之前有缓存: ${hadCache}, 当前缓存数量: ${answerStateCache.size}`)
+  }
+
+  // oldModuleType 参数可选，用于在模式切换时指定旧的 moduleType
+  function resetAndFetchQuestions(oldModuleType) {
+    // 调试日志
+    debugResetAndFetch(props.moduleType, props.bankId)
+
+    // 先保存当前答题状态（使用旧的 moduleType 作为 key）
+    saveCurrentAnswerState(oldModuleType)
+
+    // 同步最新的设置（模式切换后 moduleSettings 会变化）
+    const settings = store.getModuleSettings(props.moduleType)
+    questionCount.value = settings.questionCount
+    onlyWrong.value = settings.onlyWrong || false
+
+    isResetting.value = true
+
+    questions.value = []
+    allQuestionsData.value = []
+    answers.value = []
+    currentQuestionIndex.value = 0
+    selectedAnswer.value = null
+    subFillBlankAnswers.value = {}
+    subEssayAnswers.value = {}
+    questionOffset.value = 0
+    loading.value = true
+
+    // 尝试从缓存恢复，如果没有缓存则重新加载
+    if (restoreAnswerState()) {
+      isResetting.value = false
+      return
+    }
+
+    // 重新加载题目
+    fetchQuestionsInternal().finally(() => {
+      // 延迟清除标志位，确保所有 watch 都已处理完毕
+      setTimeout(() => {
+        isResetting.value = false
+      }, 100)
+    })
+  }
+
+  // 内部函数：实际加载题目（跳过早期返回检查）
+  async function fetchQuestionsInternal() {
+    // 调试日志
+    debugFetchStart(props.moduleType, props.bankId)
+
+    if (isFavoriteMode && singleQuestionId) {
+      fetchSingleQuestion(singleQuestionId)
+      return
+    }
+
+    if (!props.bankId || props.bankId <= 0) {
+      loading.value = false
+      return
+    }
+
+    loading.value = true
+
+    try {
+      const response = await listQuestionMainAll({
+        bankId: props.bankId,
+        status: "0"
+      })
+      let data = []
+      if (Array.isArray(response.data)) {
+        data = response.data
+      } else if (Array.isArray(response.result)) {
+        data = response.result
+      }
+
+      // 调试日志：API返回数据
+      debugFetchComplete(props.moduleType, data)
+
+      if (data.length === 0) {
+        proxy.$modal.msgWarning('该题库暂无题目')
+        questions.value = []
+        resetAnswers()
+        loading.value = false
+        return
+      }
+
+      processQuestions(data)
+      subFillBlankAnswers.value = {}
+      subEssayAnswers.value = {}
+      await nextTick()
+    } catch (err) {
+      proxy.$modal.msgError('加载题目失败')
+      loading.value = false
+    }
+  }
+
   // ✅ 修复：fetchQuestions 函数 - 确保初始化时重置子题答案
   async function fetchQuestions() {
+    // 调试日志
+    debugFetchQuestions(props.moduleType, props.bankId, questions.value.length > 0)
+
     if (questions.value.length > 0) {
       loading.value = false
       return
@@ -800,6 +1157,16 @@ export function useQuestionPractice(props, { proxy }, options = {}) {
       subFillBlankAnswers.value = {}
       subEssayAnswers.value = {}
       await nextTick()
+
+      // 调试日志：状态快照
+      debugStateSnapshot(props.moduleType, {
+        questions: questions.value,
+        allQuestionsData: allQuestionsData.value,
+        currentQuestionIndex: currentQuestionIndex.value,
+        questionCount: questionCount.value,
+        questionOffset: questionOffset.value,
+        isResetting: isResetting.value
+      })
     } catch (err) {
       proxy.$modal.msgError('加载题目失败')
       loading.value = false
@@ -1284,6 +1651,7 @@ export function useQuestionPractice(props, { proxy }, options = {}) {
     subEssayAnswers,
     questionOffset,
     allQuestionsData,
+    isResetting,
 
     // 计算属性
     currentQuestion,
@@ -1295,6 +1663,7 @@ export function useQuestionPractice(props, { proxy }, options = {}) {
 
     // 方法
     fetchQuestions,
+    resetAndFetchQuestions,
     resetAnswers,
     goToQuestion,
     nextQuestion,
@@ -1325,6 +1694,12 @@ export function useQuestionPractice(props, { proxy }, options = {}) {
     // 响应式更新方法
     updateOnlyWrong,
     updateQuestionCount,
-    updateQuestionOffset
+    updateQuestionOffset,
+    updateQuestionCountAndSlice,
+
+    // 答题状态缓存方法
+    saveCurrentAnswerState,
+    restoreAnswerState,
+    clearAnswerStateCache
   }
 }

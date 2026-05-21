@@ -107,7 +107,7 @@
             <div class="setting-desc">设置本次模拟考试的答题时间（分钟）</div>
           </div>
           <div class="time-limit-input">
-            <el-input-number v-model="localSettings.examTimeLimit" :min="5" :max="43200" controls-position="right" />
+            <el-input-number v-model="localSettings.examTimeLimit" :min="1" :max="43200" controls-position="right" />
             <span class="time-unit">分钟</span>
           </div>
         </div>

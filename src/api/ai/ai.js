@@ -276,9 +276,13 @@ export function generateQuestionsWithContext(data) {
  * @param {function} onChunk - 收到数据块时的回调
  * @param {function} onComplete - 完成时的回调
  * @param {function} onError - 错误时的回调
+ * @param {AbortSignal} signal - 取消信号
+ * @param {string} provider - AI提供商
  */
-export async function assistantStream(message, onChunk, onComplete, onError, signal) {
+export async function assistantStream(message, onChunk, onComplete, onError, signal, provider, userId) {
     const params = new URLSearchParams({ message })
+    if (provider) params.append('provider', provider)
+    if (userId != null && userId !== '') params.append('userId', userId)
     const url = `${import.meta.env.VITE_APP_BASE_API}/ai/assistant/stream?${params.toString()}`
 
     try {
@@ -323,18 +327,20 @@ export async function assistantStream(message, onChunk, onComplete, onError, sig
 }
 
 // 获取对话历史
-export function getConversationHistory(sessionId) {
+export function getConversationHistory(sessionId, userId) {
     return request({
         url: `/ai/conversation/${sessionId}`,
-        method: 'get'
+        method: 'get',
+        params: { userId }
     })
 }
 
 // 清空对话
-export function clearConversation(sessionId) {
+export function clearConversation(sessionId, userId) {
     return request({
         url: `/ai/conversation/${sessionId}`,
-        method: 'delete'
+        method: 'delete',
+        params: { userId }
     })
 }
 
@@ -348,12 +354,15 @@ export function clearConversation(sessionId) {
  * @param {function} onChunk - 收到数据块时的回调
  * @param {function} onComplete - 完成时的回调
  * @param {function} onError - 错误时的回调
+ * @param {string} provider - AI提供商
  */
-export async function analyzeQuestionStream(question, questionType, options, correctAnswer, onChunk, onComplete, onError) {
+export async function analyzeQuestionStream(question, questionType, options, correctAnswer, onChunk, onComplete, onError, provider, userId) {
     const params = new URLSearchParams({ question })
     if (questionType) params.append('questionType', questionType)
     if (options) params.append('options', options)
     if (correctAnswer) params.append('correctAnswer', correctAnswer)
+    if (provider) params.append('provider', provider)
+    if (userId != null && userId !== '') params.append('userId', userId)
 
     const url = `${import.meta.env.VITE_APP_BASE_API}/ai/analyze/question/stream?${params.toString()}`
 

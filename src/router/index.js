@@ -15,12 +15,12 @@ export const constantRoutes = [
   },
   {
     path: '/login',
-    component: () => import('@/views/login'),
+    component: () => import('@/views/auth'),
     hidden: true
   },
   {
     path: '/register',
-    component: () => import('@/views/register'),
+    component: () => import('@/views/auth'),
     hidden: true
   },
   {
@@ -150,10 +150,10 @@ export const constantRoutes = [
             hidden: true
           },
           {
-            path: 'text',
-            name: 'FrontToolsText',
-            component: () => import('@/views/front/tools/text.vue'),
-            meta: { title: '文本工具', layout: 'front', keepAlive: true },
+            path: 'classDiagram',
+            name: 'FrontToolsClassDiagram',
+            component: () => import('@/views/front/tools/classDiagram.vue'),
+            meta: { title: '类图生成', layout: 'front', keepAlive: true },
             hidden: true
           }
         ]

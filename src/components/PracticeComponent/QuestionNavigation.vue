@@ -21,7 +21,7 @@
     </div>
 
     <!-- 功能按钮 -->
-    <div class="action-buttons">
+    <div class="action-buttons" v-if="moduleType !== 'mock'">
       <!-- 新增：AI 解析按钮 -->
       <el-button size="small" type="warning" plain @click="$emit('ai-analyze')">
         <el-icon>
@@ -63,6 +63,10 @@ defineProps({
   bankId: {
     type: [Number, String],
     default: null
+  },
+  moduleType: {
+    type: String,
+    default: ''
   },
   isExamMode: {
     type: Boolean,

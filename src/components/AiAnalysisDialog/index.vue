@@ -1,9 +1,13 @@
 <template>
     <el-dialog v-model="visible" title="🤖 AI 题目解析" width="600px" :close-on-click-modal="false" @close="handleClose">
+        <div class="model-select-bar">
+            <span class="model-label">模型：</span>
+            <AiModelSelector v-model="selectedProvider" width="180px" />
+        </div>
         <div class="analysis-container">
             <!-- 题目信息 -->
             <div class="question-info">
-                <div class="question-text">{{ question }}</div>
+                <div class="question-text">{{ getPlainText(question) }}</div>
                 <div class="question-meta">
                     <el-tag v-if="questionType" size="small">{{ questionType }}</el-tag>
                 </div>
@@ -12,7 +16,7 @@
             <!-- 流式输出内容 -->
             <div class="analysis-content" ref="contentRef">
                 <div v-if="streamContent" v-html="formattedContent"></div>
-                <div v-else-if="isGenerating" class="loading-tip">
+                <div v-else-if="isGeneratingState" class="loading-tip">
                     <el-icon class="is-loading">
                         <Loading />
                     </el-icon>
@@ -33,8 +37,8 @@
                     复制解析
                 </el-button>
                 <el-button @click="handleClose">关闭</el-button>
-                <el-button type="primary" @click="startAnalysis" :loading="isGenerating">
-                    {{ isGenerating ? '解析中...' : '开始解析' }}
+                <el-button type="primary" @click="startAnalysis" :loading="isGeneratingState">
+                    {{ isGeneratingState ? '解析中...' : '开始解析' }}
                 </el-button>
             </div>
         </template>
@@ -46,6 +50,11 @@ import { ref, computed, watch } from 'vue'
 import { Loading, DocumentCopy } from '@element-plus/icons-vue'
 import { analyzeQuestionStream } from '@/api/ai/ai'
 import { ElMessage } from 'element-plus'
+import AiModelSelector from '@/components/AiModelSelector/index.vue'
+import useUserStore from '@/store/modules/user'
+import { getPlainText } from '@/utils/questionUtils'
+
+const userStore = useUserStore()
 
 const props = defineProps({
     question: { type: String, default: '' },
@@ -60,7 +69,8 @@ const props = defineProps({
 const emit = defineEmits(['close', 'update-cache', 'generating'])
 
 const visible = ref(true)
-const streamContent = ref(props.cachedContent || '')  // 使用缓存初始化
+const streamContent = ref(props.cachedContent || '')
+const selectedProvider = ref('')
 
 const isGenerating = ref(false)
 const contentRef = ref(null)
@@ -70,6 +80,18 @@ watch(() => props.cachedContent, (newVal) => {
     if (!isGenerating.value) {
         streamContent.value = newVal || ''
     }
+})
+
+// 监听外部 isGenerating 状态变化（用于父组件控制）
+watch(() => props.isGenerating, (newVal) => {
+    if (newVal !== undefined) {
+        isGenerating.value = newVal
+    }
+})
+
+// 计算属性：综合判断是否正在生成（优先使用外部 prop，内部状态作为后备）
+const isGeneratingState = computed(() => {
+    return props.isGenerating !== false ? props.isGenerating : isGenerating.value
 })
 
 // 格式化内容（简单处理换行和标题）
@@ -178,7 +200,9 @@ const startAnalysis = async () => {
             console.error('解析失败:', error)
             ElMessage.error('解析失败，请重试')
             emit('generating', false)
-        }
+        },
+        selectedProvider.value,
+        userStore.id
     )
 }
 
@@ -189,6 +213,19 @@ const handleClose = () => {
 </script>
 
 <style scoped lang="scss">
+.model-select-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 8px;
+
+    .model-label {
+        font-size: 13px;
+        color: #6b7280;
+        flex-shrink: 0;
+    }
+}
+
 .analysis-container {
     .question-info {
         background: #f5f7fa;

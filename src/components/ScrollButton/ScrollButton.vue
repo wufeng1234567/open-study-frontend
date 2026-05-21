@@ -23,6 +23,10 @@ const props = defineProps({
   right: {
     type: Number,
     default: 20
+  },
+  scrollContainer: {
+    type: Object,
+    default: null
   }
 })
 
@@ -32,8 +36,11 @@ let lastScrollTop = 0
 let hideTimer = null
 let directionTimer = null
 
+const getTarget = () => props.scrollContainer || document.documentElement
+
 const handleScroll = () => {
-  const scrollTop = document.documentElement.scrollTop
+  const target = getTarget()
+  const scrollTop = props.scrollContainer ? target.scrollTop : document.documentElement.scrollTop
 
   visible.value = scrollTop > 100
 
@@ -54,19 +61,30 @@ const handleScroll = () => {
 }
 
 const handleClick = () => {
+  const target = getTarget()
   if (scrollDirection.value === 'down') {
-    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })
+    if (props.scrollContainer) {
+      target.scrollTo({ top: target.scrollHeight, behavior: 'smooth' })
+    } else {
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })
+    }
   } else {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (props.scrollContainer) {
+      target.scrollTo({ top: 0, behavior: 'smooth' })
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
   }
 }
 
 onMounted(() => {
-  window.addEventListener('scroll', handleScroll)
+  const target = props.scrollContainer || window
+  target.addEventListener('scroll', handleScroll)
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('scroll', handleScroll)
+  const target = props.scrollContainer || window
+  target.removeEventListener('scroll', handleScroll)
   if (hideTimer) clearTimeout(hideTimer)
   if (directionTimer) clearTimeout(directionTimer)
 })

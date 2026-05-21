@@ -57,15 +57,15 @@
                 </div>
             </div>
 
-            <div class="tool-card" @click="goTo('text')">
+            <div class="tool-card" @click="goTo('classDiagram')">
                 <div class="tool-icon" style="background: #f3e8ff;">
                     <el-icon :size="32">
-                        <Edit />
+                        <DataLine />
                     </el-icon>
                 </div>
                 <div class="tool-content">
-                    <h3 class="tool-title">文本工具</h3>
-                    <p class="tool-desc">文本对比、统计、正则测试、加密解密</p>
+                    <h3 class="tool-title">类图生成</h3>
+                    <p class="tool-desc">粘贴 Java 代码，自动生成 UML 类图，支持导出</p>
                 </div>
                 <div class="tool-arrow">
                     <el-icon>
@@ -79,7 +79,7 @@
 
 <script setup name="FrontToolsHome">
 import { useRouter } from 'vue-router'
-import { Picture, Document, MagicStick, Edit, ArrowRight } from '@element-plus/icons-vue'
+import { Picture, Document, MagicStick, DataLine, ArrowRight } from '@element-plus/icons-vue'
 import { useFrontPageCacheStore } from '@/store/modules/frontPageCache'
 
 const router = useRouter()

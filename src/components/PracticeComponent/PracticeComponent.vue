@@ -22,6 +22,13 @@
               <div v-else class="header-spacer"></div>
               <MarkedButton :question-id="item.id" :bank-id="bankId" size="small" @change="handleMarkedChange(index)" />
               <FavoriteButton type="question" :target-id="item.id" size="small" />
+              <el-button v-if="moduleType !== 'mock'" size="small" type="warning" plain
+                @click="openAiAnalysisForQuestion(item)">
+                <el-icon>
+                  <MagicStick />
+                </el-icon>
+                AI 解析
+              </el-button>
             </div>
             <QuestionDisplay :current-question="item" :current-question-index="index" :total-questions="totalQuestions"
               :selected-answer="answers[index]" :sub-fill-blank-answers="subFillBlankAnswers"
@@ -39,6 +46,10 @@
             class="overview-submit-area">
             <el-button v-if="canGoPrevBatch" @click="handlePrevBatch">上一波</el-button>
             <el-button @click="handleSubmit">提交</el-button>
+          </div>
+
+          <div v-if="moduleType === 'mock' && showExamResult" class="overview-submit-area">
+            <el-button type="primary" @click="handleFinishExam">结束考试</el-button>
           </div>
 
           <div v-if="moduleType !== 'mock' && (isExamMode || isPracticeMode)" class="overview-submit-area">
@@ -59,8 +70,8 @@
           :stats="{ correctCount, wrongCount, accuracy }" :is-exam-mode="isExamMode" :is-practice-mode="isPracticeMode"
           :is-last-question="isLastQuestion" :show-exam-result="showExamResult" :total-score="totalScore"
           :answered-count="answeredCount" :total-count="totalQuestions" :remaining-count="remainingCount"
-          @go-to-question="scrollToQuestion" @toggle-overview="toggleOverview" @reset-practice="resetPractice"
-          @submit-exam="handleSubmitExam" />
+          :module-type="moduleType" @go-to-question="scrollToQuestion" @toggle-overview="toggleOverview"
+          @reset-practice="resetPractice" @submit-exam="handleSubmitExam" @finish-exam="handleFinishExam" />
       </div>
     </template>
 
@@ -92,14 +103,15 @@
           accuracy
         }" :is-exam-mode="isExamMode" :is-practice-mode="isPracticeMode" :is-last-question="isLastQuestion"
           :show-exam-result="showExamResult" :total-score="totalScore" :answered-count="answeredCount"
-          :total-count="totalQuestions" :remaining-count="remainingCount" @go-to-question="goToQuestion"
-          @reset-practice="resetPractice" @submit-exam="handleSubmitExam" @toggle-overview="toggleOverview" />
+          :total-count="totalQuestions" :remaining-count="remainingCount" :module-type="moduleType"
+          @go-to-question="goToQuestion" @reset-practice="resetPractice" @submit-exam="handleSubmitExam"
+          @toggle-overview="toggleOverview" @finish-exam="handleFinishExam" />
       </div>
 
 
 
       <QuestionNavigation :show-prev="currentQuestionIndex > 0" :show-next="currentQuestionIndex < totalQuestions - 1"
-        :question-id="currentQuestion?.id" :bank-id="bankId" :is-exam-mode="isExamMode"
+        :question-id="currentQuestion?.id" :bank-id="bankId" :module-type="moduleType" :is-exam-mode="isExamMode"
         :is-practice-mode="isPracticeMode" :is-last-question="isLastQuestion" :can-go-prev-batch="canGoPrevBatch"
         :is-last-batch="isLastBatch" :has-submitted-current-batch="hasSubmittedCurrentBatch"
         :show-submit-button="(isExamMode || isPracticeMode) && moduleType !== 'mock'" @prev-question="prevQuestion"
@@ -109,11 +121,13 @@
     </template>
 
     <!-- AI 解析弹窗 -->
-    <AiAnalysisDialog v-if="showAnalysisDialog" :question="currentQuestion?.title || currentQuestion?.question || ''"
-      :question-id="currentQuestion?.id" :question-type="getQuestionTypeName(currentQuestion?.type)"
-      :options="formatOptionsForAnalysis(currentQuestion)" :correct-answer="currentQuestion?.correctAnswer"
-      :cached-content="currentAnalysisContent" :is-generating="isAnalysisGenerating" @close="showAnalysisDialog = false"
-      @update-cache="(content) => updateAnalysisCache(currentQuestion?.id, content)"
+    <AiAnalysisDialog v-if="showAnalysisDialog"
+      :question="analysisTargetQuestion?.title || analysisTargetQuestion?.question || ''"
+      :question-id="analysisTargetQuestion?.id" :question-type="getQuestionTypeName(analysisTargetQuestion?.type)"
+      :options="formatOptionsForAnalysis(analysisTargetQuestion)"
+      :correct-answer="analysisTargetQuestion?.correctAnswer" :cached-content="currentAnalysisContent"
+      :is-generating="isAnalysisGenerating" @close="showAnalysisDialog = false"
+      @update-cache="(content) => updateAnalysisCache(analysisTargetQuestion?.id, content)"
       @generating="setAnalysisGenerating" />
 
     <!-- 刷题设置弹窗 -->
@@ -129,7 +143,7 @@
 <script setup>
 import { ref, computed, watch, getCurrentInstance, nextTick, onMounted, onUnmounted } from 'vue'
 import { ElMessageBox } from 'element-plus'
-import { InfoFilled, RefreshRight } from '@element-plus/icons-vue'
+import { InfoFilled, RefreshRight, MagicStick } from '@element-plus/icons-vue'
 import PracticeHeader from './PracticeHeader.vue'
 import QuestionDisplay from './QuestionDisplay.vue'
 import AnswerCard from './AnswerCard.vue'
@@ -142,6 +156,14 @@ import ImageViewer from './ImageViewer.vue'
 import { useQuestionPractice } from '@/composables/useQuestionPractice'
 import usePracticeSettingsStore from '@/store/modules/practiceSettings'
 import AiAnalysisDialog from '@/components/AiAnalysisDialog/index.vue'
+
+// 调试日志工具
+import {
+  debugEnterModule,
+  debugLeaveModule,
+  debugWatchTrigger,
+  debugStateSnapshot
+} from '@/utils/practiceDebug'
 
 const props = defineProps({
   bankId: { type: Number, required: true },
@@ -192,12 +214,19 @@ const isTimeDanger = computed(() => remainingTime.value > 0 && remainingTime.val
 
 function startExamTimer() {
   if (props.moduleType !== 'mock') return
+  // 如果已经显示考试结果，不启动计时器
+  if (showExamResult.value) {
+    console.log(`[EXAM] 跳过启动计时器（已显示考试结果）`)
+    return
+  }
   const totalSeconds = examTimeLimit.value * 60
   remainingTime.value = totalSeconds
+  console.log(`[EXAM] 启动考试计时器, 总时间: ${totalSeconds}秒`)
   examTimer.value = setInterval(() => {
     if (remainingTime.value > 0) {
       remainingTime.value--
     } else {
+      console.log(`[EXAM] 时间到，停止计时器`)
       stopExamTimer()
       handleTimeUp()
     }
@@ -206,40 +235,80 @@ function startExamTimer() {
 
 function stopExamTimer() {
   if (examTimer.value) {
+    console.log(`[EXAM] 停止计时器`)
     clearInterval(examTimer.value)
     examTimer.value = null
   }
 }
 
+// 防止重复调用 handleTimeUp
+let isTimeUpHandled = false
+
 function handleTimeUp() {
+  // 如果已经处理过，不再重复处理
+  if (isTimeUpHandled || showExamResult.value) {
+    console.log(`[EXAM] 跳过 handleTimeUp（已处理或已显示结果）`)
+    return
+  }
+  isTimeUpHandled = true
+  console.log(`[EXAM] handleTimeUp 被调用`)
   ElMessageBox.alert('考试时间已到，系统将自动提交试卷！', '时间到', {
     confirmButtonText: '确定',
     type: 'warning'
   }).then(() => {
+    console.log(`[EXAM] 用户点击确定，提交试卷`)
     handleSubmitExam()
+    isTimeUpHandled = false
   }).catch(() => {
+    console.log(`[EXAM] 弹窗被关闭，提交试卷`)
     handleSubmitExam()
+    isTimeUpHandled = false
   })
 }
 
-watch(() => props.moduleType, (newType) => {
+watch(() => props.moduleType, (newType, oldType) => {
+  // 调试日志
+  debugWatchTrigger('moduleType', newType, newType, oldType)
+
+  // 当 moduleType 从有效值变为 undefined（路由过渡）时，保存旧模块状态
+  if (newType === undefined && oldType && oldType !== 'null') {
+    console.log(`[CACHE] 路由过渡，保存旧模块状态: ${oldType}`)
+    saveCurrentAnswerState(oldType)
+    return
+  }
+
   if (newType === 'mock' && !showExamResult.value) {
     startExamTimer()
   } else {
     stopExamTimer()
     remainingTime.value = 0
   }
+
+  // 只在模式切换时重置（新值有效，且不是首次加载）
+  // oldType 为 undefined 表示路由切换过渡，也需要触发重置
+  if (newType && newType !== oldType && oldType !== null) {
+    debugLeaveModule(oldType || 'unknown', props.bankId)
+    debugEnterModule(newType, props.bankId)
+    // 传入旧的 moduleType，用于保存旧模块的答题状态
+    resetAndFetchQuestions(oldType)
+  }
 })
 
 watch(showExamResult, (val) => {
+  console.log(`[EXAM] showExamResult 变化: ${val}, moduleType: ${props.moduleType}`)
   if (val) {
     stopExamTimer()
+    isTimeUpHandled = false
   } else if (props.moduleType === 'mock') {
+    isTimeUpHandled = false
     startExamTimer()
   }
 })
 
 onMounted(() => {
+  // 调试日志
+  debugEnterModule(props.moduleType, props.bankId)
+
   if (!isFirstLoaded.value && props.bankId && props.bankId > 0) {
     isFirstLoaded.value = true
     fetchQuestions()
@@ -250,6 +319,12 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  // 调试日志
+  debugLeaveModule(props.moduleType, props.bankId)
+
+  // 保存答题状态
+  saveCurrentAnswerState()
+
   stopExamTimer()
 })
 
@@ -517,11 +592,7 @@ const handlePrevBatch = () => {
 const handleSettingsSave = (data) => {
   const { settings } = data
   if (settings.questionCount !== moduleSettings.value.questionCount) {
-    updateQuestionCount(settings.questionCount)
-    const newCount = settings.questionCount || 10
-    const newOffset = Math.floor(questionOffset.value / newCount) * newCount
-    questionOffset.value = Math.max(0, newOffset)
-    fetchQuestions()
+    updateQuestionCountAndSlice(settings.questionCount)
   }
 }
 
@@ -612,6 +683,7 @@ const {
   subEssayAnswers,
   questionOffset,
   allQuestionsData,
+  isResetting,
   currentQuestion,
   totalQuestions,
   correctCount,
@@ -619,6 +691,7 @@ const {
   accuracy,
   displayOptions,
   fetchQuestions,
+  resetAndFetchQuestions,
   resetAnswers,
   goToQuestion,
   nextQuestion,
@@ -638,7 +711,10 @@ const {
   updateQuestionCount,
   updateQuestionOffset,
   applyQuestionLimits,
-  loadBatchWithoutReset
+  loadBatchWithoutReset,
+  updateQuestionCountAndSlice,
+  saveCurrentAnswerState,
+  clearAnswerStateCache
 } = useQuestionPractice(props, { proxy }, {
   questionCount: moduleSettings.value.questionCount,
   onlyWrong: moduleSettings.value.onlyWrong
@@ -651,12 +727,29 @@ const handleSubmitExam = () => {
   showExamResult.value = true
 }
 
+// 结束考试：清空模拟考试缓存并关闭
+const handleFinishExam = () => {
+  console.log(`[EXAM] handleFinishExam 被调用`)
+  // 重置考试结果状态
+  showExamResult.value = false
+  totalScore.value = 0
+  hasSubmittedCurrentBatch.value = false
+  // 清空模拟考试的答题状态缓存
+  clearAnswerStateCache('mock')
+  console.log(`[EXAM] 缓存已清空，准备关闭页面`)
+  // 关闭页面
+  emit('close')
+}
+
 watch(() => moduleSettings.value.questionCount, (val) => {
-  updateQuestionCount(val)
-  fetchQuestions()
+  // 如果正在重置中，跳过（防止二次触发）
+  if (isResetting.value) return
+  updateQuestionCountAndSlice(val)
 })
 
 watch(() => moduleSettings.value.onlyWrong, (val) => {
+  // 如果正在重置中，跳过（防止二次触发）
+  if (isResetting.value) return
   updateOnlyWrong(val)
   fetchQuestions()
 })
@@ -684,6 +777,19 @@ function openImageViewer(src) {
 function openAiAnalysis() {
   const questionId = currentQuestion.value?.id
   if (!questionId) return
+  analysisTargetQuestion.value = currentQuestion.value
+  if (analysisCache.value.has(questionId)) {
+    currentAnalysisContent.value = analysisCache.value.get(questionId)
+  } else {
+    currentAnalysisContent.value = ''
+  }
+  showAnalysisDialog.value = true
+}
+
+function openAiAnalysisForQuestion(question) {
+  const questionId = question?.id
+  if (!questionId) return
+  analysisTargetQuestion.value = question
   if (analysisCache.value.has(questionId)) {
     currentAnalysisContent.value = analysisCache.value.get(questionId)
   } else {
@@ -709,6 +815,7 @@ function formatOptionsForAnalysis(question) {
 const analysisCache = ref(new Map())
 const currentAnalysisContent = ref('')
 const isAnalysisGenerating = ref(false)
+const analysisTargetQuestion = ref(null)
 
 function updateAnalysisCache(questionId, content) {
   analysisCache.value.set(questionId, content)

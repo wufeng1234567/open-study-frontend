@@ -114,6 +114,18 @@
           </el-form-item>
         </template>
 
+        <template v-if="form.provider === 'siliconflow'">
+          <el-divider content-position="left">硅基流动 高级配置</el-divider>
+
+          <el-form-item label="思考模式">
+            <el-select v-model="form.thinkingMode" placeholder="选择思考模式" style="width: 100%">
+              <el-option label="启用思考" value="enabled" />
+              <el-option label="禁用思考" value="disabled" />
+            </el-select>
+            <div class="form-tip">禁用思考模式可提升响应速度</div>
+          </el-form-item>
+        </template>
+
         <el-form-item label="设为默认">
           <el-switch v-model="form.isDefault" :active-value="1" :inactive-value="0" />
         </el-form-item>
@@ -211,6 +223,11 @@ const defaultBaseUrl = computed(() => defaultBaseUrls[form.provider] || '')
 
 watch(() => form.provider, (newProvider) => {
   form.providerName = providerNames[newProvider] || newProvider
+  if (!isEdit.value) {
+    form.thinkingMode = 'auto'
+    form.reasoningEffort = 'high'
+    form.contextLength = '32k'
+  }
 }, { immediate: true })
 
 function maskApiKey(key) {

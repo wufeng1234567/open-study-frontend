@@ -10,61 +10,26 @@
     </div>
 
     <el-card class="qa-card">
-      <!-- 聊天记录区域 -->
-      <div class="chat-history" ref="chatHistoryRef">
-        <div v-for="(msg, index) in chatHistory" :key="index" :class="['message', msg.role]">
-          <div class="message-content" v-if="msg.role === 'assistant'">
-            <div class="message-role">🤖 AI</div>
-            <div class="message-text rendered-md" @click="copyText(msg.content)" v-html="renderMarkdown(msg.content)">
-            </div>
-            <el-button class="msg-copy-btn" size="small" text @click.stop="copyText(msg.content)">
-              📋 复制
-            </el-button>
-          </div>
-          <div class="message-content" v-else>
-            <div class="message-role">👤 我</div>
-            <div class="message-text">{{ msg.content }}</div>
-          </div>
-        </div>
-
-        <div v-if="isGenerating && !isPaused" class="message ai">
-          <div class="message-content">
-            <div class="message-role">🤖 AI</div>
-            <div class="message-text typing">
-              <span></span><span></span><span></span>
-            </div>
-          </div>
-        </div>
+      <div class="qa-model-bar">
+        <AiModelSelector v-model="selectedProvider" width="180px" />
       </div>
-
-      <!-- 输入区 -->
-      <div class="input-area">
-        <div class="input-wrapper">
-          <el-input v-model="question" type="textarea" :rows="3" placeholder="请输入你的问题...（Ctrl+Enter 发送）"
-            @keydown.ctrl.enter="handleSend" :disabled="isGenerating" class="question-input" />
-          <div class="input-actions">
-            <el-checkbox v-model="useStream">使用流式输出</el-checkbox>
-            <div class="action-buttons">
-              <el-button v-if="isGenerating" @click="togglePause" :type="isPaused ? 'success' : 'warning'" size="small">
-                {{ isPaused ? '▶ 继续' : '⏸ 暂停' }}
-              </el-button>
-              <el-button v-if="isGenerating" @click="stopGeneration" type="danger" size="small">
-                ⏹ 停止
-              </el-button>
-              <el-button class="ai-question-btn" size="small" @click="openAiBankDialog">
-                <el-icon style="margin-right: 4px">
-                  <MagicStick />
-                </el-icon>
-                AI 出题
-              </el-button>
-              <el-button type="primary" @click="handleSend" :loading="isGenerating"
-                :disabled="isGenerating || !question.trim()">
-                发送
-              </el-button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AiChatStream
+        v-model:messages="chatHistory"
+        :is-generating="isGenerating"
+        :is-paused="isPaused"
+        placeholder="请输入你的问题...（Ctrl+Enter 发送）"
+        @send="handleChatSend"
+        @stop="stopGeneration"
+        @toggle-pause="togglePause"
+      >
+        <template #input-left>
+          <el-checkbox v-model="useStream">使用流式输出</el-checkbox>
+          <el-button class="ai-question-btn" size="small" @click="openAiBankDialog">
+            <el-icon style="margin-right: 4px"><MagicStick /></el-icon>
+            AI 出题
+          </el-button>
+        </template>
+      </AiChatStream>
     </el-card>
 
     <!-- 滚动按钮 -->
@@ -103,9 +68,9 @@ import { askQuestion, saveQaRecord, getQaHistory, getKnowledgeBaseDetail } from 
 import { listMyQuestionBank } from '@/api/questionBank/questionBank'
 import useUserStore from '@/store/modules/user'
 import { useFrontPageCacheStore } from '@/store/modules/frontPageCache'
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
 import ScrollButton from '@/components/ScrollButton/ScrollButton.vue'
+import AiChatStream from '@/components/AiChatStream/index.vue'
+import AiModelSelector from '@/components/AiModelSelector/index.vue'
 
 const userStore = useUserStore()
 const cacheStore = useFrontPageCacheStore()
@@ -132,16 +97,9 @@ const fetchKbName = async () => {
   }
 }
 
-const renderMarkdown = (content) => {
-  if (!content) return ''
-  const html = marked.parse(content)
-  return DOMPurify.sanitize(html)
-}
-
-const question = ref('')
 const chatHistory = ref([])
 const useStream = ref(true)
-const chatHistoryRef = ref(null)
+const selectedProvider = ref('')
 
 const isGenerating = ref(false)
 const isPaused = ref(false)
@@ -149,18 +107,6 @@ const isQaPage = ref(false)
 let abortController = null
 let pausedResolver = null
 let aiMsgIndex = 0
-let scrollTimer = null
-
-// 复制文本
-const copyText = async (text) => {
-  if (!text) return
-  try {
-    await navigator.clipboard.writeText(text)
-    ElMessage.success('复制成功')
-  } catch {
-    ElMessage.error('复制失败')
-  }
-}
 
 // 保存问答记录
 const saveQA = (question, answer, durationMs) => {
@@ -178,54 +124,6 @@ const saveQA = (question, answer, durationMs) => {
   }).catch(err => {
     console.error('[QA] saveQA failed:', err)
   })
-}
-
-// 滚动到底部
-const scrollToBottom = async () => {
-  await nextTick()
-  window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' })
-}
-
-// 流式输出时使用防抖滚动（流式结束时才滚动）
-const scrollToBottomDebounced = () => {
-  if (scrollTimer) clearTimeout(scrollTimer)
-  scrollTimer = setTimeout(() => {
-    if (!isGenerating.value && isNearBottom()) {
-      scrollToBottom()
-    }
-    scrollTimer = null
-  }, 100)
-}
-
-// 用户是否在手动滚动（通过鼠标滚轮或触摸）
-const isUserScrolling = ref(false)
-let userScrollTimeout = null
-
-const onUserScroll = () => {
-  const scrollTop = window.scrollY || document.documentElement.scrollTop
-  const scrollHeight = document.body.scrollHeight
-  const clientHeight = window.innerHeight
-  const distanceFromBottom = scrollHeight - scrollTop - clientHeight
-  if (distanceFromBottom > 100) {
-    isUserScrolling.value = true
-  }
-  if (userScrollTimeout) clearTimeout(userScrollTimeout)
-  userScrollTimeout = setTimeout(() => {
-    isUserScrolling.value = false
-  }, 300)
-}
-
-// 检测用户是否在底部附近（距离底部50px内）
-const isNearBottom = () => {
-  const scrollTop = window.scrollY || document.documentElement.scrollTop
-  const scrollHeight = document.body.scrollHeight
-  const clientHeight = window.innerHeight
-  return scrollHeight - scrollTop - clientHeight < 50
-}
-
-// 流式输出时完全不自动滚动，让用户自由滚动
-const scrollToBottomForStreaming = () => {
-  // 禁用自动滚动，完全由用户控制
 }
 let isLoadingHistory = false
 
@@ -272,7 +170,6 @@ const loadQaHistory = async () => {
       // ✅ 使用 push 而不是直接赋值
       chatHistory.value.push(...history)
       console.log('[QA] chatHistory populated:', chatHistory.value.length, 'messages')
-      await scrollToBottom()
     } else {
       console.log('[QA] no history records found')
     }
@@ -304,7 +201,8 @@ const togglePause = () => {
 const handleStreamAsk = (userQuestion) => {
   return new Promise(async (resolve, reject) => {
     const baseUrl = import.meta.env.VITE_APP_BASE_API || ''
-    const url = `${baseUrl}/rag/ask/stream?question=${encodeURIComponent(userQuestion)}&knowledgeBaseId=${knowledgeBaseId.value}`
+    let url = `${baseUrl}/rag/ask/stream?question=${encodeURIComponent(userQuestion)}&knowledgeBaseId=${knowledgeBaseId.value}&userId=${userStore.id || 0}`
+    if (selectedProvider.value) url += `&provider=${selectedProvider.value}`
 
     abortController = new AbortController()
     let fullContent = ''
@@ -348,7 +246,6 @@ const handleStreamAsk = (userQuestion) => {
                 fullContent += json.text || ''
                 if (chatHistory.value[aiMsgIndex]) {
                   chatHistory.value[aiMsgIndex].content = fullContent
-                  scrollToBottomForStreaming()
                 }
               } else if (json.type === 'end') metadata = json
             } catch (e) { console.warn(e) }
@@ -363,7 +260,6 @@ const handleStreamAsk = (userQuestion) => {
       }
       if (chatHistory.value[aiMsgIndex]) {
         chatHistory.value[aiMsgIndex].content = final
-        scrollToBottom()
       }
       resolve(final)
     } catch (error) {
@@ -385,20 +281,16 @@ const handleNormalAsk = async (userQuestion) => {
     ElMessage.info('问题不在知识库范围内，使用通用知识回答')
   }
   chatHistory.value[aiMsgIndex].content = final
-  await scrollToBottom()
   return final
 }
 
-const handleSend = async () => {
-  const content = question.value.trim()
+const handleChatSend = async ({ content }) => {
   if (!content || isGenerating.value) return
 
   const start = Date.now()
   chatHistory.value.push({ role: 'user', content })
-  question.value = ''
   aiMsgIndex = chatHistory.value.length
   chatHistory.value.push({ role: 'assistant', content: '' })
-  await scrollToBottom()
 
   isGenerating.value = true
   isPaused.value = false
@@ -469,33 +361,20 @@ const handleNewBank = () => {
 
 onMounted(() => {
   isQaPage.value = true
-  window.addEventListener('wheel', onUserScroll, { passive: true })
-  // ✅ 首次挂载时加载聊天记录
   loadQaHistory()
   fetchKbName()
 })
 
 onActivated(() => {
   isQaPage.value = true
-  window.addEventListener('wheel', onUserScroll, { passive: true })
 })
 
 onDeactivated(() => {
   isQaPage.value = false
-  window.removeEventListener('wheel', onUserScroll)
 })
 
 onUnmounted(() => {
   abortController?.abort()
-  window.removeEventListener('wheel', onUserScroll)
-  if (scrollTimer) {
-    clearTimeout(scrollTimer)
-    scrollTimer = null
-  }
-  if (userScrollTimeout) {
-    clearTimeout(userScrollTimeout)
-    userScrollTimeout = null
-  }
 })
 
 watch(() => route.params.id, async (newId, oldId) => {
@@ -547,272 +426,36 @@ watch(() => route.params.id, async (newId, oldId) => {
   color: #1f2937;
 }
 
-.chat-history {
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 12px;
+.qa-model-bar {
+  padding: 8px 16px;
+  border-bottom: 1px solid #f3f4f6;
 }
 
-.message {
-  margin-bottom: 16px;
-  display: flex;
-}
-
-.message.user {
-  justify-content: flex-end;
-}
-
-.message.ai {
-  justify-content: flex-start;
-}
-
-.message-content {
-  max-width: 75%;
-  padding: 12px 16px;
-  border-radius: 16px;
-  background-color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-  border: 1px solid #e5e7eb;
-  position: relative;
-}
-
-.message.user .message-content {
-  background-color: #f3f4f6;
-  color: #1f2937;
-  border: 1px solid #e5e7eb;
-}
-
-.message-role {
-  font-size: 12px;
-  margin-bottom: 6px;
-  opacity: 0.7;
-}
-
-.message-text {
-  line-height: 1.6;
-  word-wrap: break-word;
-}
-
-/* 复制按钮 */
-.msg-copy-btn {
-  position: absolute;
-  bottom: 8px;
-  right: 12px;
-  border-radius: 8px;
-  padding: 4px 8px;
-  font-size: 12px;
-  z-index: 10;
-  color: #6b7280;
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  transition: all 0.2s;
-}
-
-.msg-copy-btn:hover {
+.ai-question-btn {
+  display: inline-flex;
+  align-items: center;
   background: #fff;
-  border-color: #d1d5db;
-}
-
-.input-area {
-  background-color: white;
-  border-top: 1px solid #e5e7eb;
-  padding: 16px 20px;
-}
-
-.input-wrapper {
-  width: 100%;
-}
-
-.question-input :deep(.el-textarea__inner) {
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
   border-radius: 8px;
-  box-shadow: 0 0 0 1px #e5e7eb;
-  font-size: 14px;
-  line-height: 1.5;
+  font-weight: 500;
+  padding: 6px 14px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    box-shadow: 0 0 0 1px #d1d5db;
+    transform: translateY(-2px);
+    border-color: #409eff;
+    color: #409eff;
   }
 
-  &:focus {
-    box-shadow: 0 0 0 1px #409eff;
-  }
-}
-
-.input-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 12px;
-  flex-wrap: wrap;
-  gap: 10px;
-
-  :deep(.el-button) {
-    border-radius: 8px;
-    font-weight: 500;
-    padding: 6px 14px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    color: #6b7280;
-
-    &:hover {
-      transform: translateY(-2px);
-      border-color: #d1d5db;
-      color: #4b5563;
-    }
-
-    &:active {
-      transform: translateY(0);
-    }
-  }
-
-  .ai-question-btn {
-    display: inline-flex;
-    align-items: center;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    color: #6b7280;
-    border-radius: 8px;
-    font-weight: 500;
-    padding: 6px 14px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-    &:hover {
-      transform: translateY(-2px);
-      border-color: #409eff;
-      color: #409eff;
-    }
-
-    &:active {
-      transform: translateY(0);
-    }
-  }
-
-  :deep(.el-button--primary) {
-    background: #fff;
-    border-color: #d1d5db;
-    color: #1f2937;
-
-    &:hover {
-      border-color: #9ca3af;
-      color: #1f2937;
-    }
-  }
-
-  :deep(.el-button--warning) {
-    background: #fefce8;
-    border-color: #e5e0c0;
-    color: #947a4a;
-
-    &:hover {
-      background: #fff;
-      border-color: #d1b860;
-      color: #7a6238;
-    }
-  }
-
-  :deep(.el-button--danger) {
-    background: #fef2f2;
-    border-color: #e5d0d0;
-    color: #b45353;
-
-    &:hover {
-      background: #fff;
-      border-color: #b38080;
-      color: #9b3a3a;
-    }
-  }
-
-  :deep(.el-button--success) {
-    background: #f0f9eb;
-    border-color: #e1f3d8;
-    color: #67c23a;
-
-    &:hover {
-      background: #fff;
-      border-color: #b3e19d;
-      color: #5daf34;
-    }
-  }
-}
-
-.action-buttons {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-
-  :deep(.el-button) {
-    border-radius: 8px;
-  }
-}
-
-/* 打字动画 */
-.typing {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  min-height: 20px;
-}
-
-.typing span {
-  width: 8px;
-  height: 8px;
-  background-color: #999;
-  border-radius: 50%;
-  animation: typing 1.4s infinite ease-in-out both;
-}
-
-.typing span:nth-child(1) {
-  animation-delay: -0.32s;
-}
-
-.typing span:nth-child(2) {
-  animation-delay: -0.16s;
-}
-
-@keyframes typing {
-
-  0%,
-  80%,
-  100% {
-    transform: scale(0);
-  }
-
-  40% {
-    transform: scale(1);
+  &:active {
+    transform: translateY(0);
   }
 }
 
 @media (max-width: 768px) {
   .qa-container {
     padding: 12px;
-  }
-
-  .message-content {
-    max-width: 85%;
-  }
-
-  .input-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .action-buttons {
-    justify-content: flex-end;
-  }
-
-  .scroll-bottom-btn {
-    bottom: 20px;
-    right: 20px;
-    width: 40px;
-    height: 40px;
-  }
-
-  .btn-icon {
-    width: 18px;
-    height: 18px;
   }
 }
 
@@ -898,122 +541,6 @@ watch(() => route.params.id, async (newId, oldId) => {
 
   .el-empty {
     padding: 40px 0;
-  }
-}
-</style>
-
-<style lang="scss">
-.rendered-md {
-  line-height: 1.7;
-  font-size: 15px;
-  color: #1f2937;
-  padding-bottom: 20px;
-  cursor: pointer;
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    margin: 1em 0 0.5em;
-    color: #1f2937;
-    font-weight: 700;
-    line-height: 1.3;
-  }
-
-  h1 {
-    font-size: 1.75em;
-  }
-
-  h2 {
-    font-size: 1.35em;
-  }
-
-  h3 {
-    font-size: 1.15em;
-  }
-
-  p {
-    margin: 0 0 10px;
-  }
-
-  ul,
-  ol {
-    padding-left: 1.5em;
-    margin: 0.4em 0;
-  }
-
-  blockquote {
-    margin: 0.6em 0;
-    padding: 6px 14px;
-    border-left: 4px solid #d1d5db;
-    color: #6b7280;
-    background: #f9fafb;
-    border-radius: 0 8px 8px 0;
-  }
-
-  pre {
-    background: #1f2937;
-    color: #e5e7eb;
-    padding: 14px;
-    border-radius: 8px;
-    margin: 0.6em 0;
-    overflow-x: auto;
-    font-size: 13px;
-    line-height: 1.5;
-  }
-
-  code {
-    background: #f3f4f6;
-    color: #b45353;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.9em;
-  }
-
-  pre code {
-    color: inherit;
-    background: none;
-    padding: 0;
-  }
-
-  table {
-    border-collapse: collapse;
-    margin: 0.8em 0;
-    width: 100%;
-  }
-
-  th,
-  td {
-    border: 1px solid #e5e7eb;
-    padding: 8px 12px;
-    text-align: left;
-  }
-
-  th {
-    background: #f9fafb;
-    font-weight: 600;
-  }
-
-  hr {
-    border: none;
-    border-top: 1px solid #e5e7eb;
-    margin: 1em 0;
-  }
-
-  img {
-    max-width: 100%;
-    border-radius: 8px;
-  }
-
-  a {
-    color: #409eff;
-    text-decoration: none;
-  }
-
-  a:hover {
-    text-decoration: underline;
   }
 }
 </style>

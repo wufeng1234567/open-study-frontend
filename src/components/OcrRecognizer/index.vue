@@ -286,7 +286,7 @@ const handleClosed = () => {
     resetData()
 }
 
-// 上传前校验
+// 上传前校验并压缩图片
 const beforeUpload = (file) => {
     const isImage = file.type.startsWith('image/')
     if (!isImage) {
@@ -298,8 +298,55 @@ const beforeUpload = (file) => {
         ElMessage.error('图片大小不能超过 10MB')
         return false
     }
-    selectedFile.value = file
+    compressImage(file).then(compressedFile => {
+        selectedFile.value = compressedFile
+    })
     return true
+}
+
+// 图片压缩函数
+const compressImage = (file) => {
+    return new Promise((resolve) => {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+            const img = new Image()
+            img.onload = () => {
+                const canvas = document.createElement('canvas')
+                const ctx = canvas.getContext('2d')
+
+                // 最大宽度/高度限制
+                const maxWidth = 1920
+                const maxHeight = 1920
+                let width = img.width
+                let height = img.height
+
+                if (width > maxWidth || height > maxHeight) {
+                    const ratio = Math.min(maxWidth / width, maxHeight / height)
+                    width = Math.round(width * ratio)
+                    height = Math.round(height * ratio)
+                }
+
+                canvas.width = width
+                canvas.height = height
+                ctx.drawImage(img, 0, 0, width, height)
+
+                canvas.toBlob(
+                    (blob) => {
+                        const compressedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        })
+                        console.log(`图片压缩: ${file.size / 1024}KB -> ${compressedFile.size / 1024}KB (${Math.round(compressedFile.size / file.size * 100)}%)`)
+                        resolve(compressedFile)
+                    },
+                    'image/jpeg',
+                    0.85
+                )
+            }
+            img.src = e.target.result
+        }
+        reader.readAsDataURL(file)
+    })
 }
 
 const handleUploadError = () => ElMessage.error('图片上传失败')
@@ -343,8 +390,10 @@ const startRecognize = async () => {
 
     try {
         const response = await ocrRecognize(formData)
+        console.log('OCR 响应:', response)
         if (response.code === 200) {
             const data = response.data
+            console.log('OCR data:', data)
             if (data.status) {
                 if (data.status.level === 'error') {
                     ElMessage.error(data.status.icon + ' ' + data.status.title)
@@ -355,6 +404,9 @@ const startRecognize = async () => {
                 }
             }
             parseOcrResultFromWords(data.words || [])
+        } else {
+            console.error('OCR 响应错误:', response.code, response.msg)
+            ElMessage.error(response.msg || '识别失败')
         }
     } catch (error) {
         console.error('OCR识别失败:', error)

@@ -47,6 +47,19 @@
         <!-- 考试模式：显示总分 -->
         <template v-else-if="isExamMode && showExamResult">
           <div class="total-score">总分：{{ totalScore }} 分</div>
+          <el-button v-if="moduleType === 'mock'" type="primary" size="small" @click="$emit('finish-exam')">
+            结束考试
+          </el-button>
+        </template>
+
+        <!-- 模拟考试提交后（非考试模式）：显示结束按钮 -->
+        <template v-else-if="moduleType === 'mock' && showExamResult">
+          <div>答对：<span class="correct">{{ stats.correctCount }}</span>题</div>
+          <div>答错：<span class="wrong">{{ stats.wrongCount }}</span>题</div>
+          <div>正确率：<span class="rate">{{ stats.accuracy }}%</span></div>
+          <el-button type="primary" size="small" @click="$emit('finish-exam')">
+            结束考试
+          </el-button>
         </template>
 
         <!-- 考试模式：交卷按钮（非最后一题时显示） -->
@@ -103,10 +116,11 @@ const props = defineProps({
   totalScore: { type: Number, default: 0 },
   answeredCount: { type: Number, default: 0 },
   totalCount: { type: Number, default: 0 },
-  remainingCount: { type: Number, default: 0 }
+  remainingCount: { type: Number, default: 0 },
+  moduleType: { type: String, default: '' }
 })
 
-const emit = defineEmits(['go-to-question', 'reset-practice', 'submit-exam', 'toggle-overview'])
+const emit = defineEmits(['go-to-question', 'reset-practice', 'submit-exam', 'toggle-overview', 'finish-exam'])
 
 const isMounted = ref(false)
 const gridItemRefs = ref({})
